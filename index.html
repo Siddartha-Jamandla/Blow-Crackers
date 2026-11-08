@@ -269,7 +269,7 @@
         <label for="wishInput">✍️ Sky Writing Cracker — your words in fireworks
           <small>Type up to 40 characters — your full text appears in the sky together with “Happy Diwali”, wrapped over two lines if it is long.</small>
         </label>
-        <input id="wishInput" type="text" maxlength="40" placeholder="e.g. Siddartha, Happy Diwali, Shubh Diwali…" autocomplete="off" aria-describedby="wishCount" />
+        <input id="wishInput" type="text" maxlength="40" placeholder="e.g. for All of you, Happy Diwali, Shubh Diwali…" autocomplete="off" aria-describedby="wishCount" />
         <span class="wish-count" id="wishCount" aria-live="polite">0/40</span>
         <button class="wish-show" id="wishShowBtn" type="button">✨ Show in Sky</button>
         <button class="wish-di" id="wishDiwaliBtn" type="button">🪔 Happy Diwali</button>
@@ -1421,7 +1421,7 @@
   wishInputEl.addEventListener('input', updateWishCount);
   updateWishCount();
   document.getElementById('wishShowBtn').addEventListener('click', function(){ showWish(wishInputEl.value); });
-  document.getElementById('wishDiwaliBtn').addEventListener('click', function(){ wishInputEl.value='HAPPY DIWALI'; updateWishCount(); showWish('HAPPY DIWALI'); });
+  document.getElementById('wishDiwaliBtn').addEventListener('click', function(){ wishInputEl.value='for All of you'; updateWishCount(); showWish('for All of you'); });
   wishInputEl.addEventListener('keydown', function(e){ if(e.key==='Enter'){ e.preventDefault(); showWish(wishInputEl.value); } });
   function setTheme(name, celebrate){
     if(!THEMES[name]) return;
