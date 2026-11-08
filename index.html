@@ -1,0 +1,1941 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="color-scheme" content="dark" />
+<link rel="icon" href="data:," />
+<title>Blow Crackers — Light Up the Sky</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#fff7e8;
+    --ink-dim:#cdbb96;
+    --gold:#ffb52e;
+    --deep:#05070f;
+    --panel:rgba(10,12,24,.86);
+    --panel-line:rgba(255,181,46,.22);
+    --card:rgba(255,255,255,.055);
+    --btn1:#ffcf5c; --btn2:#f07f13; --on-btn:#2a1500;
+  }
+  body[data-theme="golden"]{--ink:#fff8dc; --ink-dim:#e8c87a; --gold:#ffcf3f; --deep:#1a0e02; --panel:rgba(38,20,4,.90); --panel-line:rgba(255,190,40,.48); --btn1:#ffe066; --btn2:#e07b00; --on-btn:#2a1500;}
+  body[data-theme="royal"]{--ink:#f6efff; --ink-dim:#c9b3ec; --gold:#c99aff; --deep:#0d0518; --panel:rgba(27,10,50,.90); --panel-line:rgba(190,140,255,.44); --btn1:#d8b4fe; --btn2:#7c3aed; --on-btn:#1e0636;}
+  body[data-theme="eco"]{--ink:#efffec; --ink-dim:#aadbb2; --gold:#7be495; --deep:#03130a; --panel:rgba(6,29,16,.90); --panel-line:rgba(105,240,174,.40); --btn1:#a7f3c7; --btn2:#159947; --on-btn:#04240f;}
+  body[data-theme="festival"]{--ink:#fff5f9; --ink-dim:#ffb9d4; --gold:#ff5da2; --deep:#140420; --panel:rgba(32,8,38,.90); --panel-line:rgba(255,93,162,.42); --btn1:#ffd166; --btn2:#ef476f; --on-btn:#2b0015;}
+  .cracker.active,.btn.primary,.wish-show,.filter.active{background:linear-gradient(180deg,var(--btn1),var(--btn2)) !important; color:var(--on-btn) !important; border-color:var(--btn1) !important;}
+  .wish-panel{border-color:var(--panel-line);}
+  .themes{display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin:0 2px 8px; overflow:visible; padding-bottom:2px;}
+  .themes .tlabel{font-family:"Baloo 2",cursive; font-weight:700; font-size:14px; margin-right:2px; flex:0 0 auto;}
+  .themes .tnote{display:none;}
+  .theme-btn{flex:1 0 auto; white-space:nowrap;}
+  .theme-btn{display:inline-flex; align-items:center; gap:7px; border:1px solid rgba(255,255,255,.16); background:rgba(255,255,255,.06); color:var(--ink); padding:7px 10px; border-radius:999px; font:800 12px "Nunito",sans-serif; cursor:pointer;}
+  .theme-btn .sw{width:18px; height:18px; border-radius:50%; flex:0 0 18px; border:2px solid rgba(255,255,255,.55); box-shadow:0 0 8px rgba(0,0,0,.35);}
+  .theme-btn.active{border-color:var(--gold); background:rgba(255,255,255,.14); box-shadow:0 0 0 2px color-mix(in srgb, var(--gold) 35%, transparent);}
+  .theme-btn:active{transform:scale(.96);}
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{
+    margin:0;
+    font-family:"Nunito",system-ui,sans-serif;
+    background:var(--deep);
+    color:var(--ink);
+    overflow:hidden;
+  }
+  .app{position:fixed; inset:0; display:flex; flex-direction:column; height:100vh; height:100dvh;}
+  /* Sky stage and bazaar dock are stacked in normal flow — the dock can
+     never float over the houses, ground or diyas drawn on the canvas. */
+  .stage{position:relative; flex:1 1 auto; min-height:210px; overflow:hidden; background:var(--deep);}
+  #sky{position:absolute; inset:0; width:100%; height:100%; display:block; touch-action:none; cursor:crosshair;}
+  #flash{position:absolute; inset:0; background:#fff2c8; opacity:0; pointer-events:none; mix-blend-mode:screen; z-index:3;}
+  #vignette{position:absolute; inset:0; pointer-events:none; background:radial-gradient(ellipse at 50% 42%, transparent 55%, rgba(0,0,0,.42) 100%); z-index:2;}
+
+  .topbar{
+    position:relative; z-index:5;
+    display:flex; flex-wrap:wrap; align-items:flex-start; justify-content:space-between; gap:8px 12px;
+    padding:calc(14px + env(safe-area-inset-top)) 16px 0;
+    pointer-events:none;
+  }
+  .titleblock{pointer-events:auto; flex:1 1 180px; min-width:0;}
+  h1{
+    font-family:"Baloo 2",cursive;
+    font-size:clamp(28px,5.5vw,44px);
+    line-height:.95; margin:0; font-weight:800; letter-spacing:.2px;
+    color:var(--ink);
+    text-shadow:0 2px 18px rgba(0,0,0,.8), 0 0 34px rgba(255,140,30,.30);
+  }
+  h1 .accent{color:var(--gold);}
+  .sub{margin:6px 0 0; font-size:clamp(13px,2.6vw,15px); color:var(--ink-dim); font-weight:600; max-width:36ch; text-shadow:0 1px 8px rgba(0,0,0,.9);}
+  .top-actions{display:flex; flex-wrap:wrap; justify-content:flex-end; gap:8px; pointer-events:auto; flex:0 1 auto; min-width:0;}
+  .chip{
+    display:inline-flex; align-items:center; gap:7px;
+    background:var(--panel); border:1px solid var(--panel-line);
+    color:var(--ink); border-radius:999px; padding:8px 13px;
+    font-family:inherit; font-weight:800; font-size:13px; cursor:pointer;
+    backdrop-filter:blur(10px);
+    box-shadow:0 4px 18px rgba(0,0,0,.4);
+  }
+  .chip b{color:var(--gold); font-size:15px;}
+  button.chip:active{transform:scale(.96);}
+
+  .hint{
+    position:relative; z-index:4; text-align:center; margin-top:10px; pointer-events:none;
+    font-weight:700; font-size:13px; color:rgba(255,247,232,.78);
+    text-shadow:0 1px 8px rgba(0,0,0,.9);
+    animation:hintPulse 2.4s ease-in-out infinite;
+  }
+  @keyframes hintPulse{0%,100%{opacity:.55}50%{opacity:1}}
+  .hint.gone{opacity:0 !important; animation:none; transition:opacity .6s;}
+
+  .dock{
+    position:relative; z-index:6; flex:0 1 auto; min-height:0;
+    width:100%; overflow-y:auto; overscroll-behavior:contain;
+    background:var(--deep);
+    max-height:52dvh;
+    padding:8px 12px calc(10px + env(safe-area-inset-bottom));
+  }
+  .dock-inner{
+    margin:0 auto; width:min(980px,100%);
+    background:var(--panel); border:1px solid var(--panel-line); border-radius:18px;
+    padding:10px 12px;
+    box-shadow:0 10px 30px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.06);
+  }
+  .dock-label{
+    display:flex; align-items:center; justify-content:space-between; gap:10px; margin:2px 4px 10px;
+  }
+  .dock-label span{font-family:"Baloo 2",cursive; font-weight:700; font-size:15px; letter-spacing:.3px;}
+  .dock-label small{color:var(--ink-dim); font-weight:700; font-size:12px;}
+  .wish-panel{
+    display:flex; gap:8px; flex-wrap:wrap; align-items:stretch; margin:0 2px 8px;
+    background:linear-gradient(135deg,rgba(255,181,46,.16),rgba(255,80,120,.12));
+    border:1px solid rgba(255,181,46,.35); border-radius:12px; padding:8px 10px;
+  }
+  .wish-panel label{width:100%; font-family:"Baloo 2",cursive; font-weight:700; font-size:14px; line-height:1.25;}
+  .wish-panel label small{display:inline; font-family:"Nunito",sans-serif; color:var(--ink-dim); font-weight:600; font-size:12px; margin-top:2px;}
+  .wish-panel input{
+    flex:1 1 180px; min-width:0; background:rgba(0,0,0,.38); border:1px solid rgba(255,255,255,.22);
+    color:#fff; border-radius:10px; padding:11px 12px; font:700 15px "Nunito",sans-serif; outline:none; text-transform:uppercase;
+  }
+  .wish-panel input::placeholder{color:#b9a888; text-transform:none;}
+  .wish-panel input:focus{border-color:var(--gold); box-shadow:0 0 0 3px rgba(255,181,46,.22);}
+  .wish-count{align-self:center; flex:0 0 auto; min-width:40px; text-align:right; color:var(--ink-dim); font:800 12.5px "Nunito",sans-serif; font-variant-numeric:tabular-nums;}
+  .wish-count.full{color:var(--gold);}
+  .wish-show{
+    flex:0 1 auto; border:0; border-radius:10px; padding:11px 14px; cursor:pointer;
+    background:linear-gradient(180deg,#ffcf5c,#f07f13); color:#2a1500; font:700 14px "Baloo 2",cursive;
+  }
+  .wish-di{
+    flex:0 1 auto; border:1px solid rgba(255,255,255,.22); border-radius:10px; padding:11px 12px; cursor:pointer;
+    background:rgba(255,255,255,.08); color:#fff; font:700 13px "Nunito",sans-serif;
+  }
+  .filters{display:flex; gap:6px; flex-wrap:wrap; overflow:visible; margin:0 2px 8px; padding-bottom:2px;}
+  .filter{flex:1 0 auto; white-space:nowrap; text-align:center;}
+  .filter{
+    border:1px solid rgba(255,255,255,.14); background:rgba(255,255,255,.06); color:var(--ink-dim);
+    padding:7px 11px; border-radius:999px; font:800 12px "Nunito",sans-serif; cursor:pointer;
+  }
+  .filter.active{background:#ffb52e; color:#2a1500; border-color:#ffe1a1;}
+  .crackers{
+    display:grid; grid-template-columns:repeat(auto-fill,minmax(108px,1fr)); gap:8px;
+    max-height:196px; overflow-y:auto; overscroll-behavior:contain; padding:2px; scrollbar-width:thin;
+  }
+  .crackers::-webkit-scrollbar{width:6px} .crackers::-webkit-scrollbar-thumb{background:rgba(255,181,46,.45); border-radius:99px}
+  .cracker .icon{font-size:28px; line-height:1; display:block;}
+  .cracker .badge{font-size:9px; font-weight:900; letter-spacing:.5px; text-transform:uppercase; background:#e91e63; color:#fff; border-radius:999px; padding:2px 6px;}
+  .cracker .badge.market{background:rgba(255,255,255,.14); color:var(--ink-dim);}
+  .cracker .badge.power{background:linear-gradient(180deg,#ff3d00,#b71c1c); color:#fff; box-shadow:0 0 10px rgba(255,61,0,.55); letter-spacing:.6px;}
+  .cracker.power-card{border-color:rgba(255,110,40,.45); background:linear-gradient(180deg,rgba(255,61,0,.16),rgba(255,255,255,.055));}
+  .cracker.power-card .name{color:#ffd9a8;}
+  .cracker.active .badge{background:#2a1500; color:#ffcf5c;}
+  .cracker{
+    appearance:none; border:1px solid rgba(255,255,255,.09); background:var(--card);
+    color:var(--ink); border-radius:12px; padding:10px 4px 8px; cursor:pointer;
+    display:flex; flex-direction:column; align-items:center; gap:5px;
+    font-family:inherit; transition:transform .12s, background .15s, border-color .15s;
+  }
+  .cracker svg{width:30px; height:30px; display:block;}
+  .cracker .name{font-size:12px; font-weight:800; line-height:1.1; text-align:center;}
+  .cracker .tap{font-size:10px; color:var(--ink-dim); font-weight:700; line-height:1;}
+  .cracker:hover{background:rgba(255,255,255,.11);}
+  .cracker:active{transform:scale(.95);}
+  .cracker.active{
+    background:linear-gradient(180deg,#ffc44d,#f07f13);
+    border-color:#ffe1a1; color:#2a1500;
+    box-shadow:0 6px 22px rgba(255,138,30,.40);
+  }
+  .cracker.active .tap{color:rgba(42,21,0,.7);}
+  .actions{display:flex; flex-wrap:wrap; gap:8px; margin-top:10px;}
+  .btn{
+    flex:1 1 96px; min-width:0; appearance:none; border-radius:12px; padding:12px 10px; cursor:pointer;
+    font-family:"Baloo 2",cursive; font-weight:700; font-size:15px; letter-spacing:.2px;
+    border:1px solid rgba(255,255,255,.11); background:rgba(255,255,255,.06); color:var(--ink);
+    transition:transform .12s, background .15s;
+  }
+  .btn:active{transform:scale(.97);}
+  .btn.primary{background:linear-gradient(180deg,#ffcf5c,#f07f13); color:#2a1500; border-color:#ffe1a1;}
+  .btn.primary.playing{background:linear-gradient(180deg,#ff6b6b,#d9233e); color:#fff; border-color:#ffb3b3;}
+  @media (max-width:900px){
+    .crackers{grid-template-columns:repeat(auto-fill,minmax(96px,1fr)); max-height:178px;}
+    .dock{max-height:54dvh;}
+  }
+  @media (max-width:640px){
+    .stage{min-height:196px;}
+    .themes{gap:5px;} .theme-btn{padding:6px 8px; font-size:11px; justify-content:center;} .theme-btn .sw{width:14px; height:14px; flex-basis:14px;} .themes .tlabel{font-size:13px;}
+    .filter{padding:6px 8px; font-size:11.5px;}
+    .top-actions{gap:6px;}
+    .dock{max-height:57dvh; padding:6px 8px calc(8px + env(safe-area-inset-bottom));}
+    .dock-inner{padding:8px; border-radius:14px;}
+    .dock-label{margin-bottom:6px;} .dock-label span{font-size:13.5px;}
+    .crackers{grid-template-columns:repeat(3,1fr); max-height:158px; gap:6px;}
+    .cracker{padding:7px 2px 6px; gap:3px; border-radius:10px;}
+    .cracker svg{width:24px; height:24px;} .cracker .icon{font-size:22px;}
+    .cracker .name{font-size:11.5px;} .cracker .tap{font-size:9px;}
+    .sub{display:none;}
+    h1{font-size:clamp(24px,6.4vw,32px);}
+    .dock-label small{display:none;}
+    .wish-panel{padding:7px 8px;} .wish-panel label small{display:none;}
+    .wish-panel input{flex:1 1 auto; padding:10px;}
+    .wish-show,.wish-di{flex:1 1 42%; padding:10px 8px;}
+    .actions{margin-top:8px;} .btn{padding:10px 6px; font-size:13.5px;}
+    .topbar{padding-left:12px; padding-right:12px;}
+    .chip{padding:7px 10px; font-size:12px;}
+    .hint{font-size:12px; margin-top:6px;}
+  }
+  @media (max-width:380px){
+    .crackers{grid-template-columns:repeat(3,1fr); max-height:146px;}
+    .cracker .name{font-size:11px;}
+  }
+  @media (min-width:1100px){
+    .crackers{grid-template-columns:repeat(6,1fr); max-height:188px;}
+    .dock{max-height:50dvh;}
+  }
+  @media (max-height:720px) and (min-width:641px){
+    .crackers{max-height:138px;}
+    .dock{max-height:55dvh;}
+    .wish-panel label small{display:none;}
+  }
+  @media (prefers-reduced-motion: reduce){
+    .hint{animation:none;}
+  }
+  /* Low-end / 2GB phone optimisations — applied via media query and via
+     the .lowperf class the script adds when it detects a small device.
+     Kills the expensive blur + heavy shadows that stall cheap GPUs. */
+  @media (max-width:640px){
+    .chip{backdrop-filter:none; -webkit-backdrop-filter:none;}
+    .dock-inner{box-shadow:0 4px 14px rgba(0,0,0,.35);}
+    #vignette{display:none;}
+  }
+  .lowperf .chip{backdrop-filter:none !important; -webkit-backdrop-filter:none !important;}
+  .lowperf .dock-inner{box-shadow:0 4px 14px rgba(0,0,0,.35) !important;}
+  .lowperf #vignette{display:none !important;}
+  .lowperf .cracker{transition:none !important;}
+  .lowperf .btn{transition:none !important;}
+</style>
+</head>
+<body data-theme="classic">
+<div class="app" id="app">
+ <div class="stage" id="stage">
+  <canvas id="sky"></canvas>
+  <div id="flash"></div>
+  <div id="vignette"></div>
+
+  <header class="topbar">
+    <div class="titleblock">
+      <h1>Blow <span class="accent">Crackers</span> 🎆</h1>
+      <p class="sub">A real Diwali night — the full market bazaar, new novelty crackers, and your own words written in fireworks. Pick a cracker below, then tap the sky.</p>
+    </div>
+    <div class="top-actions">
+      <div class="chip" aria-label="Crackers burst">💥 <b id="count">0</b>&nbsp;burst</div>
+      <button class="chip" id="soundBtn" aria-pressed="true">🔊 Sound on</button>
+    </div>
+  </header>
+
+  <div class="hint" id="hint">👆 Tap anywhere in the sky to burst your cracker</div>
+ </div>
+
+  <div class="dock">
+    <div class="dock-inner">
+      <div class="themes" role="group" aria-label="Diwali theme picker">
+        <span class="tlabel">🎨 Theme</span>
+        <button class="theme-btn active" type="button" data-theme-btn="classic" aria-pressed="true"><span class="sw" style="background:linear-gradient(135deg,#070c22 55%,#ffb52e 56%)"></span>Classic Night Sky</button>
+        <button class="theme-btn" type="button" data-theme-btn="golden" aria-pressed="false"><span class="sw" style="background:linear-gradient(135deg,#3a1c00 55%,#ffcf3f 56%)"></span>Golden Diwali</button>
+        <button class="theme-btn" type="button" data-theme-btn="royal" aria-pressed="false"><span class="sw" style="background:linear-gradient(135deg,#2a1052 55%,#c99aff 56%)"></span>Royal Purple</button>
+        <button class="theme-btn" type="button" data-theme-btn="eco" aria-pressed="false"><span class="sw" style="background:linear-gradient(135deg,#06351c 55%,#7be495 56%)"></span>Green / Eco Diwali</button>
+        <button class="theme-btn" type="button" data-theme-btn="festival" aria-pressed="false"><span class="sw" style="background:linear-gradient(135deg,#ef476f 33%,#ffd166 34% 66%,#06d6a0 67%)"></span>Colourful Festival</button>
+        <span class="tnote" id="themeNote">Deep blue night, warm gold bursts — the original Diwali sky.</span>
+      </div>
+      <div class="wish-panel">
+        <label for="wishInput">✍️ Sky Writing Cracker — your words in fireworks
+          <small>Type up to 40 characters — your full text appears in the sky together with “Happy Diwali”, wrapped over two lines if it is long.</small>
+        </label>
+        <input id="wishInput" type="text" maxlength="40" placeholder="e.g. Siddartha, Happy Diwali, Shubh Diwali…" autocomplete="off" aria-describedby="wishCount" />
+        <span class="wish-count" id="wishCount" aria-live="polite">0/40</span>
+        <button class="wish-show" id="wishShowBtn" type="button">✨ Show in Sky</button>
+        <button class="wish-di" id="wishDiwaliBtn" type="button">🪔 Happy Diwali</button>
+      </div>
+      <div class="dock-label">
+        <span>🧨 Full Market Bazaar — choose your cracker</span>
+        <small>100 types • Every category • New POWER range = loudest • Sparkler: hold &amp; move • Scroll for more</small>
+      </div>
+      <div class="filters" role="group" aria-label="Filter crackers">
+        <button class="filter active" data-filter="all" type="button">All 100</button>
+        <button class="filter" data-filter="aerial" type="button">🚀 Sky / Aerial</button>
+        <button class="filter" data-filter="ground" type="button">🎡 Ground</button>
+        <button class="filter" data-filter="sound" type="button">💥 Sound / Bombs</button>
+        <button class="filter" data-filter="novelty" type="button">✨ New / Novelty</button>
+        <button class="filter" data-filter="power" type="button">🔊 Power / Loudest</button>
+      </div>
+      <div class="crackers" id="crackerGrid" role="group" aria-label="Cracker types">
+        <button class="cracker active" data-cat="aerial" data-type="rocket" aria-pressed="true">
+          <svg viewBox="0 0 48 48" fill="none" aria-hidden="true"><path d="M24 4 L31 18 L24 24 L17 18 Z" fill="#ff5252"/><rect x="19" y="18" width="10" height="16" rx="2" fill="#ffd54f"/><path d="M21 34 q-2 6 -4 9 M27 34 q2 6 4 9 M24 34 v10" stroke="#ff9800" stroke-width="2.4" stroke-linecap="round"/></svg>
+          <span class="name">Rocket</span><span class="tap">tap sky</span>
+        </button>
+        <button class="cracker" data-cat="aerial" data-type="skyshot" aria-pressed="false">
+          <svg viewBox="0 0 48 48" fill="none" aria-hidden="true"><g stroke="#ffd54f" stroke-width="2.4" stroke-linecap="round"><path d="M24 6v8M24 34v8M6 24h8M34 24h8M11 11l6 6M37 11l-6 6M11 37l6-6M37 37l-6-6"/></g><circle cx="24" cy="24" r="5" fill="#ff5252"/><rect x="20" y="40" width="8" height="5" rx="1" fill="#8d6e63"/></svg>
+          <span class="name">Sky Shot</span><span class="tap">big burst</span>
+        </button>
+        <button class="cracker" data-cat="ground" data-type="flowerpot" aria-pressed="false">
+          <svg viewBox="0 0 48 48" fill="none" aria-hidden="true"><g stroke="#ffca28" stroke-width="2.2" stroke-linecap="round"><path d="M24 4v7M14 8l4 6M34 8l-4 6M10 16l6 3M38 16l-6 3"/></g><path d="M15 44 L19 24 h10 L33 44 Z" fill="#ef6c00"/><rect x="15" y="40" width="18" height="4" fill="#bf360c"/></svg>
+          <span class="name">Flower Pot</span><span class="tap">anar fountain</span>
+        </button>
+        <button class="cracker" data-cat="ground" data-type="chakra" aria-pressed="false">
+          <svg viewBox="0 0 48 48" fill="none" aria-hidden="true"><circle cx="24" cy="24" r="13" fill="none" stroke="#ffd54f" stroke-width="3"/><circle cx="24" cy="24" r="4.5" fill="#ff5252"/><g stroke="#ff9800" stroke-width="2.4" stroke-linecap="round"><path d="M24 5v5M24 38v5M5 24h5M38 24h5M11 11l3.5 3.5M33.5 33.5L37 37M37 11l-3.5 3.5M14.5 33.5L11 37"/></g></svg>
+          <span class="name">Chakra</span><span class="tap">ground spin</span>
+        </button>
+        <button class="cracker" data-cat="sound" data-type="bomb" aria-pressed="false">
+          <svg viewBox="0 0 48 48" fill="none" aria-hidden="true"><circle cx="22" cy="29" r="13" fill="#37474f"/><circle cx="17" cy="24" r="4" fill="#90a4ae" opacity=".7"/><path d="M28 18 q6-10 12-9" stroke="#ff9800" stroke-width="2.4" fill="none" stroke-linecap="round"/><path d="M41 6l1.5 3 3-1.5-1.5 3 3 1.5-3.5 1 1 3.5-3-2-1.5 3-1-3.5-3.5.5 2.5-2.5-2.5-2 3.5-.5z" fill="#ffd54f"/></svg>
+          <span class="name">Bomb</span><span class="tap">tap ground</span>
+        </button>
+        <button class="cracker" data-cat="ground" data-type="sparkler" aria-pressed="false">
+          <svg viewBox="0 0 48 48" fill="none" aria-hidden="true"><g stroke="#ffe082" stroke-width="2.2" stroke-linecap="round"><path d="M16 6v10M10 10l5 5M22 10l-5 5M7 17h9M25 17h-9"/></g><circle cx="16" cy="16" r="3" fill="#fff9c4"/><path d="M18 20 L30 42" stroke="#b0bec5" stroke-width="3" stroke-linecap="round"/></svg>
+          <span class="name">Sparkler</span><span class="tap">hold &amp; wave</span>
+        </button>
+        <button class="cracker" data-cat="aerial" data-type="cake" aria-pressed="false"><span class="icon">🎇</span><span class="name">100-Shot Cake</span><span class="tap">multi-shot box</span><span class="badge market">Market</span></button>
+        <button class="cracker" data-cat="aerial" data-type="roman" aria-pressed="false"><span class="icon">🕯️</span><span class="name">Roman Candle</span><span class="tap">5 balls in a row</span><span class="badge market">Market</span></button>
+        <button class="cracker" data-cat="novelty aerial" data-type="helicopter" aria-pressed="false"><span class="icon">🚁</span><span class="name">Helicopter</span><span class="tap">spins &amp; flies up</span><span class="badge">New</span></button>
+        <button class="cracker" data-cat="novelty aerial" data-type="parachute" aria-pressed="false"><span class="icon">🪂</span><span class="name">Parachute</span><span class="tap">floats down glowing</span><span class="badge">New</span></button>
+        <button class="cracker" data-cat="novelty aerial" data-type="butterfly" aria-pressed="false"><span class="icon">🦋</span><span class="name">Butterfly</span><span class="tap">zig-zag flyer</span><span class="badge">New</span></button>
+        <button class="cracker" data-cat="ground novelty" data-type="peacock" aria-pressed="false"><span class="icon">🦚</span><span class="name">Peacock Fountain</span><span class="tap">rainbow fan</span><span class="badge">New</span></button>
+        <button class="cracker" data-cat="ground novelty" data-type="snake" aria-pressed="false"><span class="icon">🐍</span><span class="name">Snake Tablet</span><span class="tap">black ash snake</span><span class="badge market">Market</span></button>
+        <button class="cracker" data-cat="ground novelty" data-type="smoke" aria-pressed="false"><span class="icon">🌈</span><span class="name">Colour Smoke</span><span class="tap">coloured cloud</span><span class="badge">New</span></button>
+        <button class="cracker" data-cat="ground novelty" data-type="crackling" aria-pressed="false"><span class="icon">✨</span><span class="name">Crackling Ball</span><span class="tap">silver crackles</span><span class="badge">New</span></button>
+        <button class="cracker" data-cat="ground novelty" data-type="poppop" aria-pressed="false"><span class="icon">🫧</span><span class="name">Pop Pop</span><span class="tap">tiny snaps</span><span class="badge market">Market</span></button>
+        <button class="cracker" data-cat="sound" data-type="hydrogen" aria-pressed="false"><span class="icon">💣</span><span class="name">Hydrogen Bomb</span><span class="tap">extra-large bang</span><span class="badge market">Market</span></button>
+        <button class="cracker" data-cat="sound" data-type="sutli" aria-pressed="false"><span class="icon">🧶</span><span class="name">Sutli Bomb</span><span class="tap">jute bomb</span><span class="badge market">Market</span></button>
+        <button class="cracker" data-cat="sound" data-type="lakshmi" aria-pressed="false"><span class="icon">🪔</span><span class="name">Lakshmi Bomb</span><span class="tap">classic red bomb</span><span class="badge market">Market</span></button>
+        <button class="cracker" data-cat="sound" data-type="bijili" aria-pressed="false"><span class="icon">🔴</span><span class="name">Red Bijili</span><span class="tap">fast mini string</span><span class="badge market">Market</span></button>
+        <button class="cracker" data-cat="sound" data-type="ladi" aria-pressed="false"><span class="icon">🧨</span><span class="name">Ladi 1000 Wala</span><span class="tap">garland chain</span><span class="badge market">Market</span></button>
+        <button class="cracker" data-cat="novelty" data-type="wish" aria-pressed="false"><span class="icon">✍️</span><span class="name">Wish Writer</span><span class="tap">your text in sky</span><span class="badge">New</span></button>
+        <button class="cracker power-card" data-cat="aerial power" data-type="titan" aria-pressed="false"><span class="icon">🚀</span><span class="name">Titan Rocket</span><span class="tap">loudest sky blast</span><span class="badge power">Power</span></button>
+        <button class="cracker power-card" data-cat="aerial power" data-type="megashell" aria-pressed="false"><span class="icon">🎆</span><span class="name">Mega Shell</span><span class="tap">giant double burst</span><span class="badge power">Power</span></button>
+        <button class="cracker power-card" data-cat="sound power" data-type="thunder" aria-pressed="false"><span class="icon">⚡</span><span class="name">Thunder King</span><span class="tap">heaviest thump</span><span class="badge power">Loudest</span></button>
+        <button class="cracker power-card" data-cat="sound power" data-type="sultan" aria-pressed="false"><span class="icon">👑</span><span class="name">Sultan Bomb</span><span class="tap">royal mega bang</span><span class="badge power">Power</span></button>
+        <button class="cracker power-card" data-cat="sound power" data-type="ladi10000" aria-pressed="false"><span class="icon">💥</span><span class="name">10000 Wala Ladi</span><span class="tap">longest garland</span><span class="badge power">Power</span></button>
+        <button class="cracker power-card" data-cat="ground power" data-type="volcano" aria-pressed="false"><span class="icon">🌋</span><span class="name">Volcano Eruption</span><span class="tap">lava fountain XL</span><span class="badge power">Power</span></button>
+        <button class="cracker" data-cat="aerial" data-type="willowrocket" aria-pressed="false"><span class="icon">🌟</span><span class="name">Golden Willow</span><span class="tap">long gold trails</span><span class="badge market">Market</span></button>
+        <button class="cracker" data-cat="aerial" data-type="silvershell" aria-pressed="false"><span class="icon">🤍</span><span class="name">Silver Strobe Shell</span><span class="tap">flashing silver burst</span><span class="badge market">Market</span></button>
+        <button class="cracker" data-cat="aerial" data-type="colourpeony" aria-pressed="false"><span class="icon">🌸</span><span class="name">Colour Peony Shell</span><span class="tap">big colour ball</span><span class="badge market">Market</span></button>
+        <button class="cracker" data-cat="aerial novelty" data-type="chrysanthemum" aria-pressed="false"><span class="icon">🌼</span><span class="name">Crackling Chrysanthemum</span><span class="tap">crackle shell</span><span class="badge">New</span></button>
+        <button class="cracker" data-cat="aerial" data-type="brocade" aria-pressed="false"><span class="icon">👑</span><span class="name">Brocade Crown</span><span class="tap">gold crown burst</span><span class="badge market">Market</span></button>
+        <button class="cracker" data-cat="aerial" data-type="bluepeony" aria-pressed="false"><span class="icon">💙</span><span class="name">Blue Peony Rocket</span><span class="tap">blue sky burst</span><span class="badge market">Market</span></button>
+        <button class="cracker" data-cat="aerial" data-type="greendahlia" aria-pressed="false"><span class="icon">💚</span><span class="name">Green Dahlia</span><span class="tap">green star shell</span><span class="badge market">Market</span></button>
+        <button class="cracker" data-cat="aerial" data-type="reddahlia" aria-pressed="false"><span class="icon">❤️</span><span class="name">Red Dahlia</span><span class="tap">red star shell</span><span class="badge market">Market</span></button>
+        <button class="cracker" data-cat="aerial" data-type="salute" aria-pressed="false"><span class="icon">💥</span><span class="name">Titanium Salute</span><span class="tap">white flash bang</span><span class="badge market">Market</span></button>
+        <button class="cracker" data-cat="aerial novelty" data-type="palmtree" aria-pressed="false"><span class="icon">🌴</span><span class="name">Palm Tree Shell</span><span class="tap">palm fronds burst</span><span class="badge">New</span></button>
+        <button class="cracker" data-cat="aerial novelty" data-type="doublering" aria-pressed="false"><span class="icon">⭕</span><span class="name">Double Ring Shell</span><span class="tap">two rings in sky</span><span class="badge">New</span></button>
+        <button class="cracker" data-cat="aerial novelty" data-type="heartshell" aria-pressed="false"><span class="icon">💖</span><span class="name">Heart Shell</span><span class="tap">heart shape burst</span><span class="badge">New</span></button>
+        <button class="cracker" data-cat="aerial novelty" data-type="starshell" aria-pressed="false"><span class="icon">⭐</span><span class="name">Star Shell</span><span class="tap">star shape burst</span><span class="badge">New</span></button>
+        <button class="cracker" data-cat="aerial novelty" data-type="saturn" aria-pressed="false"><span class="icon">🪐</span><span class="name">Saturn Ring Shell</span><span class="tap">ring + core burst</span><span class="badge">New</span></button>
+        <button class="cracker" data-cat="aerial" data-type="comet" aria-pressed="false"><span class="icon">☄️</span><span class="name">Comet Rocket</span><span class="tap">bright comet tail</span><span class="badge market">Market</span></button>
+        <button class="cracker" data-cat="aerial" data-type="mineshell" aria-pressed="false"><span class="icon">🎯</span><span class="name">Sky Mine</span><span class="tap">shoots straight up</span><span class="badge market">Market</span></button>
+        <button class="cracker" data-cat="aerial" data-type="fancake" aria-pressed="false"><span class="icon">🪭</span><span class="name">Fan Cake 25-Shot</span><span class="tap">fan spread shots</span><span class="badge market">Market</span></button>
+        <button class="cracker" data-cat="aerial" data-type="zippercake" aria-pressed="false"><span class="icon">⚡</span><span class="name">Zipper Cake 49-Shot</span><span class="tap">rapid zipper shots</span><span class="badge market">Market</span></button>
+        <button class="cracker power-card" data-cat="aerial power" data-type="cake200" aria-pressed="false"><span class="icon">🎆</span><span class="name">200-Shot Mega Cake</span><span class="tap">longest cake show</span><span class="badge power">Power</span></button>
+        <button class="cracker" data-cat="aerial novelty" data-type="crossette" aria-pressed="false"><span class="icon">✴️</span><span class="name">Crossette Shell</span><span class="tap">splits into four</span><span class="badge">New</span></button>
+        <button class="cracker" data-cat="ground" data-type="deluxechakra" aria-pressed="false"><span class="icon">🎡</span><span class="name">Deluxe Chakra</span><span class="tap">faster ground spin</span><span class="badge market">Market</span></button>
+        <button class="cracker" data-cat="ground novelty" data-type="discochakra" aria-pressed="false"><span class="icon">🪩</span><span class="name">Disco Chakra</span><span class="tap">colour changing spin</span><span class="badge">New</span></button>
+        <button class="cracker" data-cat="ground" data-type="ashoka" aria-pressed="false"><span class="icon">🌋</span><span class="name">Ashoka Flower Pot</span><span class="tap">tall gold fountain</span><span class="badge market">Market</span></button>
+        <button class="cracker" data-cat="ground" data-type="conefountain" aria-pressed="false"><span class="icon">🔺</span><span class="name">Cone Fountain</span><span class="tap">cone spray</span><span class="badge market">Market</span></button>
+        <button class="cracker" data-cat="ground" data-type="silverfountain" aria-pressed="false"><span class="icon">⛲</span><span class="name">Silver Fountain</span><span class="tap">silver sparks</span><span class="badge market">Market</span></button>
+        <button class="cracker" data-cat="ground" data-type="goldfountain" aria-pressed="false"><span class="icon">✨</span><span class="name">Gold Fountain</span><span class="tap">golden spray</span><span class="badge market">Market</span></button>
+        <button class="cracker" data-cat="ground novelty" data-type="tricolour" aria-pressed="false"><span class="icon">🇮🇳</span><span class="name">Tricolour Fountain</span><span class="tap">three colours</span><span class="badge">New</span></button>
+        <button class="cracker" data-cat="ground novelty" data-type="waterfall" aria-pressed="false"><span class="icon">💧</span><span class="name">Waterfall Fountain</span><span class="tap">silver curtain fall</span><span class="badge">New</span></button>
+        <button class="cracker" data-cat="ground" data-type="minipot" aria-pressed="false"><span class="icon">🪔</span><span class="name">Mini Flower Pot</span><span class="tap">small anar</span><span class="badge market">Market</span></button>
+        <button class="cracker" data-cat="ground" data-type="jumbopot" aria-pressed="false"><span class="icon">🏺</span><span class="name">Jumbo Flower Pot</span><span class="tap">XL anar fountain</span><span class="badge market">Market</span></button>
+        <button class="cracker" data-cat="ground novelty" data-type="dancingchakra" aria-pressed="false"><span class="icon">💃</span><span class="name">Dancing Chakra</span><span class="tap">jumps &amp; spins</span><span class="badge">New</span></button>
+        <button class="cracker" data-cat="ground novelty" data-type="whistlingchakra" aria-pressed="false"><span class="icon">🎵</span><span class="name">Whistling Chakra</span><span class="tap">spins with whistle</span><span class="badge">New</span></button>
+        <button class="cracker" data-cat="ground novelty" data-type="groundbloom" aria-pressed="false"><span class="icon">🌺</span><span class="name">Ground Bloom</span><span class="tap">opens like flower</span><span class="badge">New</span></button>
+        <button class="cracker" data-cat="ground" data-type="silvercone" aria-pressed="false"><span class="icon">🔻</span><span class="name">Sparkling Cone</span><span class="tap">sparkling cone</span><span class="badge market">Market</span></button>
+        <button class="cracker" data-cat="ground novelty" data-type="colourpot" aria-pressed="false"><span class="icon">🌈</span><span class="name">Colour Flower Pot</span><span class="tap">rainbow anar</span><span class="badge">New</span></button>
+        <button class="cracker" data-cat="ground novelty" data-type="lavafountain" aria-pressed="false"><span class="icon">🔥</span><span class="name">Lava Fountain</span><span class="tap">red lava spray</span><span class="badge">New</span></button>
+        <button class="cracker" data-cat="ground novelty" data-type="moonfountain" aria-pressed="false"><span class="icon">🌙</span><span class="name">Moonlight Fountain</span><span class="tap">cool silver-blue</span><span class="badge">New</span></button>
+        <button class="cracker" data-cat="ground novelty" data-type="turbospinner" aria-pressed="false"><span class="icon">🌀</span><span class="name">Turbo Spinner</span><span class="tap">super fast spinner</span><span class="badge">New</span></button>
+        <button class="cracker" data-cat="sound" data-type="bulletbomb" aria-pressed="false"><span class="icon">🔫</span><span class="name">Bullet Bomb</span><span class="tap">sharp crack</span><span class="badge market">Market</span></button>
+        <button class="cracker" data-cat="sound" data-type="mirchibomb" aria-pressed="false"><span class="icon">🌶️</span><span class="name">Mirchi Bomb</span><span class="tap">spicy loud pop</span><span class="badge market">Market</span></button>
+        <button class="cracker" data-cat="sound" data-type="atombomb" aria-pressed="false"><span class="icon">💣</span><span class="name">Atom Bomb</span><span class="tap">classic loud bang</span><span class="badge market">Market</span></button>
+        <button class="cracker" data-cat="sound" data-type="krishnabomb" aria-pressed="false"><span class="icon">🦚</span><span class="name">Krishna Bomb</span><span class="tap">big classic bang</span><span class="badge market">Market</span></button>
+        <button class="cracker" data-cat="sound" data-type="deluxebomb" aria-pressed="false"><span class="icon">💎</span><span class="name">Deluxe Bomb</span><span class="tap">premium loud bomb</span><span class="badge market">Market</span></button>
+        <button class="cracker" data-cat="sound novelty" data-type="doublesound" aria-pressed="false"><span class="icon">✌️</span><span class="name">Double Sound</span><span class="tap">two bangs in one</span><span class="badge">New</span></button>
+        <button class="cracker" data-cat="sound novelty" data-type="triplesound" aria-pressed="false"><span class="icon">3️⃣</span><span class="name">Triple Sound Bomb</span><span class="tap">three bangs</span><span class="badge">New</span></button>
+        <button class="cracker" data-cat="sound" data-type="jumbobomb" aria-pressed="false"><span class="icon">🧨</span><span class="name">Jumbo Bomb</span><span class="tap">extra jumbo bang</span><span class="badge market">Market</span></button>
+        <button class="cracker" data-cat="sound" data-type="bijili100" aria-pressed="false"><span class="icon">🔴</span><span class="name">Bijili 100 Wala</span><span class="tap">100 mini pops</span><span class="badge market">Market</span></button>
+        <button class="cracker" data-cat="sound" data-type="ladi5000" aria-pressed="false"><span class="icon">🧨</span><span class="name">Ladi 5000 Wala</span><span class="tap">long garland</span><span class="badge market">Market</span></button>
+        <button class="cracker" data-cat="sound" data-type="garlanddeluxe" aria-pressed="false"><span class="icon">📿</span><span class="name">Deluxe Garland</span><span class="tap">fast crackle chain</span><span class="badge market">Market</span></button>
+        <button class="cracker" data-cat="sound novelty" data-type="clusterbomb" aria-pressed="false"><span class="icon">🍇</span><span class="name">Cluster Bomb</span><span class="tap">bunch of pops</span><span class="badge">New</span></button>
+        <button class="cracker" data-cat="sound" data-type="greenbomb" aria-pressed="false"><span class="icon">💚</span><span class="name">Green Atom Bomb</span><span class="tap">eco loud bomb</span><span class="badge market">Market</span></button>
+        <button class="cracker" data-cat="sound" data-type="superbomb" aria-pressed="false"><span class="icon">🦸</span><span class="name">Super Bomb</span><span class="tap">super thump</span><span class="badge market">Market</span></button>
+        <button class="cracker" data-cat="sound" data-type="herobomb" aria-pressed="false"><span class="icon">🏆</span><span class="name">Hero Bomb</span><span class="tap">hero loud bang</span><span class="badge market">Market</span></button>
+        <button class="cracker" data-cat="sound" data-type="classicbomb" aria-pressed="false"><span class="icon">🎩</span><span class="name">Classic Bomb</span><span class="tap">old-school bang</span><span class="badge market">Market</span></button>
+        <button class="cracker" data-cat="novelty ground" data-type="dancingball" aria-pressed="false"><span class="icon">🔮</span><span class="name">Dancing Ball</span><span class="tap">bounces &amp; sparks</span><span class="badge">New</span></button>
+        <button class="cracker" data-cat="novelty" data-type="magicwhip" aria-pressed="false"><span class="icon">🪄</span><span class="name">Magic Whip Crackle</span><span class="tap">whip crackles</span><span class="badge">New</span></button>
+        <button class="cracker" data-cat="novelty ground" data-type="electricstone" aria-pressed="false"><span class="icon">⚡</span><span class="name">Electric Stone</span><span class="tap">electric sparks</span><span class="badge market">Market</span></button>
+        <button class="cracker" data-cat="novelty ground" data-type="twinklingstar" aria-pressed="false"><span class="icon">🌠</span><span class="name">Twinkling Star</span><span class="tap">hand twinkler</span><span class="badge market">Market</span></button>
+        <button class="cracker" data-cat="novelty aerial" data-type="colourpearl" aria-pressed="false"><span class="icon">🔵</span><span class="name">Colour Pearl</span><span class="tap">colour pearls up</span><span class="badge">New</span></button>
+        <button class="cracker" data-cat="novelty" data-type="partypopper" aria-pressed="false"><span class="icon">🎉</span><span class="name">Party Popper</span><span class="tap">confetti pop</span><span class="badge">New</span></button>
+        <button class="cracker" data-cat="novelty" data-type="confettiblast" aria-pressed="false"><span class="icon">🎊</span><span class="name">Confetti Blast</span><span class="tap">colour confetti</span><span class="badge">New</span></button>
+        <button class="cracker" data-cat="novelty aerial" data-type="skylantern" aria-pressed="false"><span class="icon">🏮</span><span class="name">Sky Lantern Flyer</span><span class="tap">glows &amp; floats up</span><span class="badge">New</span></button>
+        <button class="cracker" data-cat="novelty aerial" data-type="pencil" aria-pressed="false"><span class="icon">✏️</span><span class="name">Pencil Rocket</span><span class="tap">slim pencil flyer</span><span class="badge market">Market</span></button>
+        <button class="cracker" data-cat="novelty aerial" data-type="rainpearl" aria-pressed="false"><span class="icon">🌧️</span><span class="name">Pearl Rain</span><span class="tap">pearls rain down</span><span class="badge">New</span></button>
+        <button class="cracker" data-cat="novelty ground" data-type="fogsmoke" aria-pressed="false"><span class="icon">🌫️</span><span class="name">Fog Smoke Deluxe</span><span class="tap">thick colour fog</span><span class="badge">New</span></button>
+        <button class="cracker" data-cat="novelty ground" data-type="musicalfountain" aria-pressed="false"><span class="icon">🎶</span><span class="name">Musical Fountain</span><span class="tap">fountain + whistle</span><span class="badge">New</span></button>
+        <button class="cracker power-card" data-cat="sound power" data-type="earthquake" aria-pressed="false"><span class="icon">🌍</span><span class="name">Earthquake Bomb</span><span class="tap">ground-shaking boom</span><span class="badge power">Loudest</span></button>
+        <button class="cracker power-card" data-cat="aerial power" data-type="tsunami" aria-pressed="false"><span class="icon">🌊</span><span class="name">Tsunami Cake</span><span class="tap">wave of shots</span><span class="badge power">Power</span></button>
+        <button class="cracker power-card" data-cat="aerial power" data-type="dragonshell" aria-pressed="false"><span class="icon">🐉</span><span class="name">Dragon Shell</span><span class="tap">dragon mega burst</span><span class="badge power">Power</span></button>
+        <button class="cracker power-card" data-cat="aerial power" data-type="phoenix" aria-pressed="false"><span class="icon">🔥</span><span class="name">Phoenix Rocket</span><span class="tap">rebirth mega burst</span><span class="badge power">Power</span></button>
+        <button class="cracker power-card" data-cat="sound power" data-type="ladi20000" aria-pressed="false"><span class="icon">💥</span><span class="name">20000 Wala Ladi</span><span class="tap">longest ever garland</span><span class="badge power">Power</span></button>
+        <button class="cracker power-card" data-cat="aerial power" data-type="supernova" aria-pressed="false"><span class="icon">🌌</span><span class="name">Supernova Shell</span><span class="tap">biggest sky burst</span><span class="badge power">Loudest</span></button>
+      </div>
+      <div class="actions">
+        <button class="btn primary" id="finaleBtn">🎇 Grand Finale</button>
+        <button class="btn" id="burstAllBtn">Burst 10 at once</button>
+        <button class="btn" id="clearBtn">Clear sky</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var canvas = document.getElementById('sky');
+  var ctx = canvas.getContext('2d', {alpha:false});
+  /* ---------- DEVICE TIER — built for a 2GB phone first ----------
+     Tier is decided once from real signals: RAM (deviceMemory),
+     CPU cores, screen size and DPR. Low tier = 2GB-class phones:
+     DPR 1, far fewer particles, no reverb, cheap flat rendering.
+     Mid tier = 3-4GB phones. High = everything else. An FPS watchdog
+     can downgrade a tier live if the phone still struggles. */
+  var _devMem = navigator.deviceMemory || 4;
+  var _cores = navigator.hardwareConcurrency || 4;
+  var _smallScreen = Math.min(window.innerWidth||999, window.innerHeight||999) < 500 || (window.innerWidth||999) < 640;
+  var PERF_TIER = (_devMem<=2 || _cores<=2 || (_devMem<=3 && _cores<=4)) ? 0 : (_devMem<=4 || _cores<=4 || _smallScreen) ? 1 : 2; /* 0 low, 1 mid, 2 high */
+  var COUNT_SCALE = PERF_TIER===0 ? 0.52 : PERF_TIER===1 ? 0.78 : 1;
+  var _dprCap = PERF_TIER===0 ? 1 : PERF_TIER===1 ? 1.5 : 2;
+  var _maxPByTier = PERF_TIER===0 ? 1300 : PERF_TIER===1 ? 2400 : 4200;
+  var _qualityDrop = 0; /* live FPS downgrade: 0 none, 1, 2 */
+  if(PERF_TIER===0) document.documentElement.classList.add('lowperf');
+  function _effMaxP(){ return Math.max(700, Math.round(_maxPByTier * (1 - _qualityDrop*0.28))); }
+  function _effCountScale(){ return COUNT_SCALE * (1 - _qualityDrop*0.22); }
+  var flashEl = document.getElementById('flash');
+  var countEl = document.getElementById('count');
+  var hintEl = document.getElementById('hint');
+
+  var W=0, H=0, DPR=1, groundY=0;
+  var stars=[], farHouses=[], houses=[], diyas=[], clouds=[], wires=[];
+  var particles=[], rockets=[], fountains=[], chakras=[], smokes=[], glows=[], shocks=[], bombs=[];
+  var textStars=[], helicopters=[], snakes=[];
+  var mode='rocket';
+  var burstCount=0;
+  var soundOn=true;
+  var sparking=false, sparkX=0, sparkY=0;
+  var finaleTimer=null;
+  var shake=0;
+  var wind=0.12;
+  var AC=null, masterGain=null;
+  var MAXP=1300;
+
+  /* Real firework colour chemistry — strontium red, barium green, sodium gold, copper blue... */
+  var SHELLS=[
+    {name:'gold',   cols:[[255,213,79],[255,167,38],[255,243,196]], glow:'255,183,77'},
+    {name:'red',    cols:[[255,82,82],[255,138,101],[255,205,210]], glow:'255,82,82'},
+    {name:'green',  cols:[[105,240,174],[178,255,198],[255,255,141]], glow:'105,240,174'},
+    {name:'blue',   cols:[[64,196,255],[179,136,255],[255,255,255]], glow:'100,181,246'},
+    {name:'pink',   cols:[[255,110,199],[255,213,79],[255,255,255]], glow:'255,110,199'},
+    {name:'silver', cols:[[255,255,255],[224,224,224],[255,249,196]], glow:'238,238,238'},
+    {name:'teal',   cols:[[100,255,218],[178,255,215],[255,255,255]], glow:'100,255,218'}
+  ];
+  /* ================= THEMES ================= */
+  var THEMES={
+    classic:{note:'Deep blue night, warm gold bursts — the original Diwali sky.', sky:['#03040c','#070c22','#10122b','#1c1428'], horizon:'255,150,60', cloud:'16,20,40', far:'#0a0e22', house:'#0d1128', roof:'#171e42', ground:['#0b0a18','#05050e'], groundLine:'255,181,46', moon:'#f3ecd2', pot:['#5d2708','#93400f','#c96a1e'], flame:'#ffb52e', flameCore:'#fff3c4', glowCol:'255,216,100', bulbs:['#ffd54f','#ff8a65','#81d4fa','#a5d6a7','#ffab91'], wishCols:[[255,213,79],[255,110,199],[100,255,218],[255,160,60],[255,255,255]], shells:SHELLS},
+    golden:{note:'Golden Diwali — amber sky-glow, marigold houses and all-gold, orange & red bursts.', sky:['#140800','#2a1500','#3d1e02','#4a2408'], horizon:'255,175,40', cloud:'52,28,6', far:'#241100', house:'#2b1804', roof:'#4a2a08', ground:['#1d0f02','#0d0600'], groundLine:'255,190,50', moon:'#ffe9a8', pot:['#6b2d05','#a85a10','#e08a1e'], flame:'#ffcf3f', flameCore:'#fff7cc', glowCol:'255,200,70', bulbs:['#ffcf3f','#ff9f1c','#ffe066','#ff7b00','#fff3b0'], wishCols:[[255,207,63],[255,159,28],[255,230,120],[255,255,255],[255,123,0]], shells:[
+      {cols:[[255,213,79],[255,167,38],[255,243,196]], glow:'255,183,77'},
+      {cols:[[255,170,40],[255,120,20],[255,220,130]], glow:'255,150,40'},
+      {cols:[[255,110,60],[255,180,60],[255,240,180]], glow:'255,130,60'},
+      {cols:[[255,240,180],[255,210,90],[255,255,255]], glow:'255,210,100'},
+      {cols:[[255,90,60],[255,170,60],[255,220,160]], glow:'255,100,60'}]},
+    royal:{note:'Royal Purple — violet night, lavender moonlight and purple, pink & silver bursts.', sky:['#08021a','#18073a','#241052','#33156b'], horizon:'178,120,255', cloud:'36,18,72', far:'#150735', house:'#1c0b3d', roof:'#301664', ground:['#12062a','#070213'], groundLine:'190,140,255', moon:'#e9dcff', pot:['#3b1a5e','#6b359e','#9a63c9'], flame:'#c99aff', flameCore:'#f6efff', glowCol:'200,150,255', bulbs:['#c99aff','#ff8ae2','#9ecbff','#e6ccff','#b388ff'], wishCols:[[201,154,255],[255,138,226],[160,200,255],[255,255,255],[190,140,255]], shells:[
+      {cols:[[179,136,255],[216,180,254],[255,255,255]], glow:'170,130,255'},
+      {cols:[[255,110,199],[255,170,230],[255,255,255]], glow:'255,110,199'},
+      {cols:[[140,160,255],[190,200,255],[255,255,255]], glow:'140,160,255'},
+      {cols:[[255,255,255],[224,210,255],[255,249,196]], glow:'220,200,255'},
+      {cols:[[210,120,255],[255,150,220],[200,220,255]], glow:'200,120,255'}]},
+    eco:{note:'Green Crackers / Eco Diwali — forest night, green & teal bursts, softer gold, calmer smoke.', sky:['#01120a','#062b18','#08351e','#0b4226'], horizon:'105,240,174', cloud:'8,42,26', far:'#062315', house:'#07281a', roof:'#0e4028', ground:['#041a0f','#020d07'], groundLine:'105,240,174', moon:'#dcffd9', pot:['#234d1e','#3d7a28','#5fa83d'], flame:'#a8e063', flameCore:'#f2ffd0', glowCol:'150,255,170', bulbs:['#a5d6a7','#7be495','#fff59d','#81c784','#c5e1a5'], wishCols:[[105,240,174],[168,224,99],[255,213,79],[255,255,255],[100,255,218]], shells:[
+      {cols:[[105,240,174],[178,255,198],[255,255,141]], glow:'105,240,174'},
+      {cols:[[100,255,218],[178,255,215],[255,255,255]], glow:'100,255,218'},
+      {cols:[[168,224,99],[220,255,170],[255,255,255]], glow:'168,224,99'},
+      {cols:[[255,213,79],[255,240,180],[255,255,255]], glow:'255,200,90'},
+      {cols:[[255,255,255],[210,255,220],[255,249,196]], glow:'220,255,225'}]},
+    festival:{note:'Colourful Festival — every colour at once: pink, teal, blue, green, gold & red bursts.', sky:['#0e0221','#26063d','#3b0a4f','#57124a'], horizon:'255,93,162', cloud:'52,14,64', far:'#22073a', house:'#2a0a3e', roof:'#48125f', ground:['#1c0530','#0d0218'], groundLine:'255,93,162', moon:'#ffe3f1', pot:['#7a1e4d','#b83a6b','#e85d8a'], flame:'#ff5da2', flameCore:'#ffe3f1', glowCol:'255,150,200', bulbs:['#ef476f','#ffd166','#06d6a0','#118ab2','#ff9f1c'], wishCols:[[239,71,111],[255,209,102],[6,214,160],[17,138,178],[255,159,28]], shells:SHELLS}
+  };
+  var themeName='classic';
+  var T=THEMES.classic;
+  function shell(){ var arr=T.shells||SHELLS; return arr[Math.floor(Math.random()*arr.length)]; }
+  function rand(a,b){ return a+Math.random()*(b-a); }
+  function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+  function rgb(c,a){ return 'rgba('+c[0]+','+c[1]+','+c[2]+','+a+')'; }
+  /* colour cools as a star burns: white-hot -> colour -> deep orange ember */
+  function coolColor(c, life){
+    var heat = life; /* 1 fresh, 0 dying */
+    var r = Math.min(255, c[0] + (255-c[0]) * Math.max(0,heat-0.72)*3.2);
+    var g = Math.min(255, c[1] * (0.35 + 0.65*heat) + (255-c[1]) * Math.max(0,heat-0.72)*3.2);
+    var b = Math.min(255, c[2] * heat*heat + (255-c[2]) * Math.max(0,heat-0.8)*4);
+    if(heat<0.3){ r = 200*heat/0.3+60; g = 60*heat/0.3; b = 10; }
+    return [Math.round(r),Math.round(g),Math.round(b)];
+  }
+
+  /* ================= SOUND — REAL CRACKER ENGINE v4 =================
+     WHY THE SOUND KEPT DYING IN THE MIDDLE (root cause, now removed):
+     the old engine built ~170 live WebAudio nodes per boom (10 filtered
+     noise chains, sub oscillators, a stereo ConvolverNode reverb, 15+
+     crackle pops), all summed through a 12:1 compressor. On a real
+     phone the audio render thread saturated a few crackers in: the
+     first bursts sounded fine, the middle dropped out completely
+     under the overload, and only a faint tail came back at the end.
+     On top of that, the render loop fired pop() calls every frame
+     (bomb fuses, dying stars) and functions scheduled dozens of pops
+     in one instant against a 250ms budget counted at SCHEDULE time —
+     so real cracker sounds mid-show were silently discarded.
+     v4 removes the whole failure mode:
+     (1) Every cracker sound is SYNTHESISED ONCE into a mono PCM buffer
+         — shock crack, sub-bass drop, street rumble, house echoes and
+         crackle rain are all baked into the waveform. Playing any
+         cracker afterwards is ONE buffer source + ONE gain node, the
+         cheapest thing WebAudio can do, so a Grand Finale costs the
+         same CPU as a single pop and can never choke.
+     (2) NO convolver and NO waveshaper on the master bus — one gentle
+         compressor only, so stacked booms cannot pump the bus down
+         to silence.
+     (3) A hard voice cap counted by OVERLAP in time, with stealing:
+         a boom ALWAYS plays — it evicts the oldest quiet voice
+         instead of being dropped. Only decorative pops/sizzles may
+         be skipped, and only when truly saturated.
+     (4) The render loop no longer sprays sound calls per frame. */
+  var _comp=null, _keepAlive=null;
+  var _bufs=null, _bufsReady=false, _bufsFull=false;
+  var _voices=[];
+  var _audioUnlocked=false;
+  var SRB=44100;
+  var _voiceCap = PERF_TIER===0 ? 18 : PERF_TIER===1 ? 24 : 30;
+  var _kindCap = {boom:8, pop:12, whistle:4, sizzle:3, whirr:2, crackle:3};
+  function _resumeAC(){
+    if(!AC) return;
+    try{
+      if(AC.state==='suspended' || AC.state==='interrupted'){
+        var rp=AC.resume(); if(rp && rp.catch) rp.catch(function(){});
+      }
+    }catch(e){}
+  }
+  function audio(){
+    if(AC && AC.state==='closed'){ AC=null; masterGain=null; _comp=null; _keepAlive=null; _bufs=null; _bufsReady=false; _bufsFull=false; _voices=[]; }
+    if(!AC){
+      try{
+        var ACtor = window.AudioContext||window.webkitAudioContext;
+        if(!ACtor) return null;
+        AC=new ACtor();
+        /* gentle bus: light compression only — enough to keep stacked
+           booms from clipping, never enough to bury quiet crackers */
+        _comp=AC.createDynamicsCompressor();
+        _comp.threshold.value=-16; _comp.knee.value=18; _comp.ratio.value=5; _comp.attack.value=0.003; _comp.release.value=0.24;
+        _comp.connect(AC.destination);
+        masterGain=AC.createGain(); masterGain.gain.value=soundOn?1.12:0;
+        masterGain.connect(_comp);
+        try{ AC.onstatechange=function(){ if(soundOn && AC && AC.state!=='running') _resumeAC(); }; }catch(e){}
+        _buildBuffers(1);
+      }catch(e){ AC=null; }
+    }
+    _resumeAC();
+    return AC;
+  }
+  /* Unlock audio on the VERY FIRST touch/click anywhere — browsers
+     keep the context suspended until a real gesture. A silent looping
+     keep-alive source then holds the phone's audio session open, so
+     the context is far less likely to be interrupted mid-show, and
+     the watchdog revives it if the OS suspends it anyway. */
+  function _unlockAudio(){
+    var ac=audio(); if(!ac) return;
+    _resumeAC();
+    if(!_audioUnlocked){
+      _audioUnlocked=true;
+      try{
+        var s=ac.createBufferSource(); s.buffer=ac.createBuffer(1,2205,SRB);
+        var g0=ac.createGain(); g0.gain.value=0.001;
+        s.connect(g0); g0.connect(ac.destination); s.start(0);
+      }catch(e){}
+      try{
+        if(!_keepAlive){
+          _keepAlive=ac.createBufferSource(); _keepAlive.buffer=ac.createBuffer(1,SRB,SRB); _keepAlive.loop=true;
+          var kg=ac.createGain(); kg.gain.value=0;
+          _keepAlive.connect(kg); kg.connect(ac.destination); _keepAlive.start(0);
+        }
+      }catch(e){}
+    }
+  }
+  document.addEventListener('pointerdown', _unlockAudio, {passive:true});
+  document.addEventListener('touchstart', _unlockAudio, {passive:true});
+  document.addEventListener('click', _unlockAudio, {passive:true});
+  document.addEventListener('visibilitychange', function(){ if(!document.hidden && soundOn) _resumeAC(); });
+  setInterval(function(){ if(soundOn && AC && AC.state!=='running') _resumeAC(); }, 1200);
+
+  /* ---------- offline PCM synthesis (runs once, ~a few hundred ms
+     spread over two phases so the first tap never hitches) ---------- */
+  function _noiseArr(n, brown){
+    var a=new Float32Array(n), b=0;
+    for(var i=0;i<n;i++){ var w=Math.random()*2-1; if(brown){ b=(b+0.025*w)/1.025; a[i]=b*4.2; } else a[i]=w; }
+    return a;
+  }
+  function _bufFrom(data){ var bf=AC.createBuffer(1,data.length,SRB); bf.getChannelData(0).set(data); return bf; }
+  function _finishBuf(d){
+    var n=d.length, peak=0, i;
+    for(i=0;i<n;i++){ var v=Math.tanh(d[i]*1.15); d[i]=v; var av=Math.abs(v); if(av>peak) peak=av; }
+    var g=peak>0.01? 0.96/peak : 1;
+    for(i=0;i<n;i++) d[i]*=g;
+    var fade=Math.min(Math.floor(SRB*0.05), n>>2);
+    for(var f=0;f<fade;f++) d[n-1-f]*= f/fade;
+    return _bufFrom(d);
+  }
+  function _synthBoom(dur,S){
+    var n=Math.floor(SRB*dur), d=new Float32Array(n);
+    var white=_noiseArr(n,false), brown=_noiseArr(n,true);
+    var body=new Float32Array(n);
+    var lp=0, lpF=0, phase=0, i, t;
+    /* envelopes as per-sample recurrences and filter coefficients
+       refreshed per 64-sample block — one exp per curve instead of
+       one per sample, so synthesis stays fast on a 2GB phone CPU */
+    var eBody=1, rBody=Math.exp(-5.2/SRB);
+    var eShock=1, rShock=Math.exp(-70/SRB);
+    var eSubF=1, rSubF=Math.exp(-6.5/SRB);
+    var eSub=1, rSub=Math.exp(-3.1/SRB);
+    var eRum=1, rRum=Math.exp(-1.7/SRB);
+    var eFc=1, rFc=Math.exp(-8.5/SRB);
+    var al=0.4;
+    for(i=0;i<n;i++){
+      if((i&63)===0){ var fc=220+3980*eFc; al=1-Math.exp(-6.2832*fc/SRB); }  /* blast pitch collapses as gas expands */
+      t=i/SRB;
+      lp+=(white[i]-lp)*al;
+      body[i]=lp*eBody;                            /* turbulent mid body */
+      var w=white[i]; lpF+=(w-lpF)*0.55;
+      var shock=(w-lpF)*eShock*0.9;                /* <40ms shock crack */
+      var f=27+111*eSubF;                          /* sub drop 138 -> 27 Hz */
+      phase+=6.2832*f/SRB;
+      var sub=Math.sin(phase)*eSub;
+      var rum=brown[i]*Math.min(1,t/0.05)*eRum;    /* street rumble */
+      d[i]=body[i]*1.05 + shock + sub*(0.85*S) + rum*0.55;
+      eBody*=rBody; eShock*=rShock; eSubF*=rSubF; eSub*=rSub; eRum*=rRum; eFc*=rFc;
+    }
+    var echoes=[[0.19,0.30],[0.38,0.19],[0.62,0.11],[0.92,0.06]];  /* slap-backs off houses */
+    for(var e=0;e<echoes.length;e++){
+      var off=Math.floor(echoes[e][0]*SRB), amp=echoes[e][1], s=0;
+      for(var j=off;j<n;j++){ s+=(body[j-off]-s)*0.25; d[j]+=s*amp; }
+    }
+    var nc=Math.round(30*S)+18;                    /* crackle rain as stars fall */
+    for(var k=0;k<nc;k++){
+      var pos=Math.floor((0.20+Math.pow(Math.random(),1.5)*(dur-0.45))*SRB);
+      var tl=Math.floor(SRB*(0.002+Math.random()*0.006)), a=(0.05+Math.random()*0.24)*Math.exp(-(pos/SRB)*0.7);
+      for(var m=0;m<tl && pos+m<n;m++) d[pos+m]+=(Math.random()*2-1)*a*(1-m/tl);
+    }
+    return _finishBuf(d);
+  }
+  function _synthPop(f0){
+    var n=Math.floor(SRB*0.09), d=new Float32Array(n), lp=0, ph=0;
+    for(var i=0;i<n;i++){
+      var t=i/SRB, w=Math.random()*2-1;
+      lp+=(w-lp)*0.35;
+      var f=f0*Math.exp(-t*26)+60;
+      ph+=6.2832*f/SRB;
+      d[i]=(w-lp)*Math.exp(-t*85)*0.85 + Math.sin(ph)*Math.exp(-t*60)*0.5;
+    }
+    return _finishBuf(d);
+  }
+  function _synthWhistle(){
+    var dur=1.05, n=Math.floor(SRB*dur), d=new Float32Array(n);
+    var x1=0,x2=0,y1=0,y2=0, ph=0, i, t;
+    var ca=0, cb=0, cc=0, cf=740;   /* bandpass coefficients, refreshed per 32-sample block */
+    for(i=0;i<n;i++){
+      t=i/SRB; var u=t/dur;
+      if((i&31)===0){
+        cf=740*Math.pow(3.1757, Math.pow(u,0.8));      /* aerodynamic sweep up */
+        if(u>0.85) cf*=1-(u-0.85)*1.1;                 /* sag at the top */
+        var w0=6.2832*cf/SRB, alpha=Math.sin(w0)/18, cw=Math.cos(w0), a0=1+alpha;
+        ca=alpha/a0; cb=-2*cw/a0; cc=(1-alpha)/a0;
+      }
+      var w=Math.random()*2-1;
+      var y=ca*w - ca*x2 - cb*y1 - cc*y2;
+      x2=x1; x1=w; y2=y1; y1=y;
+      var fl=17+13*u;
+      var amp=(0.80+0.20*Math.sin(6.2832*fl*t)) * Math.min(1,t/0.06) * (t>dur-0.16? Math.max(0,(dur-t)/0.16):1);
+      ph+=6.2832*cf*0.78/SRB;
+      d[i]=(y*1.5 + Math.sin(ph)*0.10) * amp * 0.5;
+    }
+    var lp2=0;
+    for(var j=0;j<n;j++){ var t3=j/SRB, w2=Math.random()*2-1; lp2+=(w2-lp2)*0.12; d[j]+=lp2*Math.exp(-t3*5)*0.10; }
+    return _finishBuf(d);
+  }
+  function _synthSizzle(durS){
+    var dur=durS||2.6, n=Math.floor(SRB*dur), d=new Float32Array(n);
+    var lp=0, lpF=0, sput=0.7, i;
+    for(i=0;i<n;i++){
+      if(i%64===0) sput=0.55+Math.random()*0.6;         /* sputtering burn rate */
+      var w=Math.random()*2-1;
+      lp+=(w-lp)*0.045;
+      lpF+=(w-lpF)*0.5;
+      d[i]=((w-lpF)*0.55 + lp*0.5) * sput * 0.5;
+    }
+    for(var k=0;k<80;k++){                              /* micro-crackles riding the bed */
+      var pos=Math.floor(Math.random()*(n-300)), tl=Math.floor(SRB*(0.0015+Math.random()*0.004)), a=0.10+Math.random()*0.30;
+      for(var m=0;m<tl;m++) d[pos+m]+=(Math.random()*2-1)*a*(1-m/tl);
+    }
+    var fd=Math.floor(SRB*0.03);
+    for(var f=0;f<fd;f++){ d[f]*=f/fd; d[n-1-f]*=f/fd; }
+    return _finishBuf(d);
+  }
+  function _synthWhirr(){
+    var dur=3.4, n=Math.floor(SRB*dur), d=new Float32Array(n);
+    var x1=0,x2=0,y1=0,y2=0, ph=0, i, t;
+    var ca=0, cb=0, cc=0, crate=7;   /* bandpass coefficients + spin rate, refreshed per 32-sample block */
+    for(i=0;i<n;i++){
+      t=i/SRB; var u=t/dur;
+      if((i&31)===0){
+        var fc= u<0.35 ? 500+550*(u/0.35) : 1050-430*((u-0.35)/0.65);
+        crate= u<0.4 ? 7+10*(u/0.4) : 17-11*((u-0.4)/0.6);
+        var w0=6.2832*fc/SRB, alpha=Math.sin(w0)/5.2, cw=Math.cos(w0), a0=1+alpha;
+        ca=alpha/a0; cb=-2*cw/a0; cc=(1-alpha)/a0;
+      }
+      ph+=6.2832*crate/SRB;
+      var w=Math.random()*2-1;
+      var y=ca*w - ca*x2 - cb*y1 - cc*y2;
+      x2=x1; x1=w; y2=y1; y1=y;
+      var env=Math.min(1,t/0.25)*(t>dur-0.5? Math.max(0,(dur-t)/0.5):1);
+      d[i]=y*(0.55+0.45*Math.sin(ph))*env*0.8;
+    }
+    for(var k=0;k<42;k++){
+      var pos=Math.floor(Math.random()*(n-260)), tl=Math.floor(SRB*(0.0015+Math.random()*0.003)), a=0.06+Math.random()*0.16;
+      for(var m=0;m<tl;m++) d[pos+m]+=(Math.random()*2-1)*a*(1-m/tl);
+    }
+    return _finishBuf(d);
+  }
+  function _synthCrackle(){
+    var dur=1.5, n=Math.floor(SRB*dur), d=new Float32Array(n);
+    var t=0.03;
+    while(t<dur-0.08){
+      var cluster= Math.random()<0.45? 2+Math.floor(Math.random()*4) : 1;
+      for(var k=0;k<cluster;k++){
+        var pos=Math.floor(t*SRB), tl=Math.floor(SRB*(0.002+Math.random()*0.005)), a=0.25+Math.random()*0.55, lp=0;
+        for(var m=0;m<tl && pos+m<n;m++){ var w=Math.random()*2-1; lp+=(w-lp)*0.4; d[pos+m]+=(w-lp)*a*(1-m/tl); }
+        t+=0.008+Math.random()*0.03;
+      }
+      t+=0.03+Math.random()*0.13;
+    }
+    for(var i=0;i<n;i++) d[i]+=(Math.random()*2-1)*0.015;
+    return _finishBuf(d);
+  }
+  function _idle(fn){
+    if(window.requestIdleCallback){ try{ requestIdleCallback(function(){ fn(); }, {timeout:1500}); return; }catch(e){} }
+    setTimeout(fn, 120);
+  }
+  function _buildBuffers(phase){
+    if(!AC || phase!==1) return;
+    try{
+      if(!_bufs) _bufs={pop:[]};
+      /* phase 1 (synchronous, on the first tap): only the sounds the
+         very first cracker needs — pops, a small boom, the whistle and
+         a mini sizzle — so the first tap never hitches. Everything
+         else is synthesised one buffer per idle slot in the
+         background; fallbacks cover the first second or two. */
+      _bufs.pop=[_synthPop(300),_synthPop(380),_synthPop(240)];
+      _bufs.boomSmall=_synthBoom(1.15,0.8);
+      _bufs.whistle=_synthWhistle();
+      _bufs.sizzleMini=_synthSizzle(0.8);
+      _bufsReady=true;
+      var jobs=[
+        function(){ if(AC) _bufs.boomMed=_synthBoom(1.6,1.1); },
+        function(){ if(AC) _bufs.sizzle=_synthSizzle(2.6); },
+        function(){ if(AC) _bufs.crackle=_synthCrackle(); },
+        function(){ if(AC) _bufs.boomBig=_synthBoom(2.0,1.45); },
+        function(){ if(AC) _bufs.boomXL=_synthBoom(2.4,1.8); },
+        function(){ if(AC) _bufs.boomXXL=_synthBoom(2.9,2.25); },
+        function(){ if(AC){ _bufs.whirr=_synthWhirr(); _bufsFull=true; } }
+      ];
+      for(var ji=0; ji<jobs.length; ji++) _idle(jobs[ji]);
+    }catch(e){}
+  }
+
+  /* ---------- playback: one source + one gain per sound, voice-
+     capped by time-overlap; booms steal a voice, never get dropped ---------- */
+  function _play(buf, kind, vol, rate, delay, sliceDur){
+    if(!AC || !masterGain || !buf || !(vol>0)) return null;
+    rate=rate||1;
+    var now=AC.currentTime, when=now+(delay||0);
+    var off=0, playLen=buf.duration/rate;
+    if(sliceDur && sliceDur<buf.duration){ off=Math.random()*Math.max(0.01, buf.duration-sliceDur-0.05); playLen=sliceDur; }
+    var newEnd=when+playLen;
+    var kindOverlap=0, totalOverlap=0, oldestQuiet=null, oldestBoom=null, i, v;
+    for(i=_voices.length-1;i>=0;i--){
+      v=_voices[i];
+      if(v.end<now-0.1){ _voices.splice(i,1); continue; }
+      if(v.start<newEnd && v.end>when){ totalOverlap++; if(v.kind===kind) kindOverlap++; }
+      if(v.kind==='boom' && (!oldestBoom || v.start<oldestBoom.start)) oldestBoom=v;
+      if(v.kind!=='boom' && (!oldestQuiet || v.start<oldestQuiet.start)) oldestQuiet=v;
+    }
+    if(kindOverlap>=(_kindCap[kind]||4) || totalOverlap>=_voiceCap){
+      if(kind!=='boom') return null;
+      var victim=oldestQuiet||oldestBoom;
+      if(victim){ try{ victim.src.stop(); }catch(e){} var ix=_voices.indexOf(victim); if(ix>=0) _voices.splice(ix,1); }
+    }
+    if(_voices.length>110) return null;
+    try{
+      var src=AC.createBufferSource(); src.buffer=buf; src.playbackRate.value=rate;
+      var g=AC.createGain(); g.gain.value=vol;
+      src.connect(g); g.connect(masterGain);
+      src.start(when, off);
+      if(sliceDur) src.stop(when+sliceDur+0.05);
+      var rec={src:src, kind:kind, start:when, end:newEnd};
+      _voices.push(rec);
+      src.onended=function(){ var jx=_voices.indexOf(rec); if(jx>=0) _voices.splice(jx,1); };
+      return src;
+    }catch(e){ return null; }
+  }
+  function boom(size, dist){
+    if(!soundOn) return; var ac=audio(); if(!ac || !_bufsReady) return;
+    /* LOUDER v5: power crackers (S>=2.3) use the new XXL waveform —
+       longer sub-bass drop, more crackle rain, deeper pitch — and
+       every boom is pushed hotter through the gentle bus. The bus
+       compressor (5:1, -16dB) keeps the stack from clipping, and
+       booms still steal a voice instead of ever being dropped, so
+       loudness never costs the mid-finale silence bug. */
+    var S=size||1, vol=Math.max(0.22, 1-(dist||0))*Math.min(1.38, 0.70+0.40*S);
+    var buf= S>=2.3 ? (_bufs.boomXXL||_bufs.boomXL||_bufs.boomBig||_bufs.boomMed||_bufs.boomSmall)
+          : S>=1.8 ? (_bufs.boomXL||_bufs.boomBig||_bufs.boomMed||_bufs.boomSmall)
+          : S>=1.25 ? (_bufs.boomBig||_bufs.boomMed||_bufs.boomSmall)
+          : S>=0.8 ? (_bufs.boomMed||_bufs.boomSmall) : _bufs.boomSmall;
+    var rate= S>=2.3 ? rand(0.86,0.93) : S>=1.8 ? rand(0.90,0.97) : S>=1.25 ? rand(0.95,1.02) : rand(0.98,1.08);
+    if(buf===_bufs.boomSmall && S>=0.8) rate*=0.90;
+    _play(buf, 'boom', Math.min(1.18,vol), rate);
+    /* power shells get a second low rumble layer a beat later —
+       one extra cheap buffer play, not a node stack */
+    if(S>=2.3 && _bufs.boomBig){ _play(_bufs.boomBig, 'boom', 0.55, 0.82, 0.07); }
+  }
+  function pop(vol){
+    if(!soundOn) return; var ac=audio(); if(!ac || !_bufsReady) return;
+    _play(pick(_bufs.pop), 'pop', (vol||0.2)*1.15, rand(0.92,1.12));
+  }
+  function whistle(big){
+    if(!soundOn) return; var ac=audio(); if(!ac || !_bufs || !_bufs.whistle) return;
+    _play(_bufs.whistle, 'whistle', big?0.65:0.55, big?0.92:1.0);
+  }
+  function hiss(dur, vol){
+    if(!soundOn) return; var ac=audio(); if(!ac || !_bufs) return;
+    var sb=_bufs.sizzle||_bufs.sizzleMini; if(!sb) return;
+    var D=Math.max(0.15, dur||1);
+    _play(sb, 'sizzle', Math.min(0.6,(vol||0.06)*3.2), rand(0.96,1.05), 0, Math.min(D,2.5));
+  }
+  function sizzle(dur, vol){ hiss(dur||1.2, vol||0.07); }
+  function whirr(dur){
+    if(!soundOn) return; var ac=audio(); if(!ac || !_bufs) return;
+    if(_bufs.whirr){ _play(_bufs.whirr, 'whirr', 0.5, rand(0.97,1.03), 0, Math.min(dur||3.4, 3.4)); }
+    else if(_bufs.sizzle||_bufs.sizzleMini){ _play(_bufs.sizzle||_bufs.sizzleMini, 'whirr', 0.3, 0.7, 0, Math.min(dur||3.4, 2.5)); }
+  }
+  function crackleBurst(n, spread, startAt){
+    if(!soundOn) return; var ac=audio(); if(!ac || !_bufs) return;
+    var delay=0;
+    if(startAt && startAt>ac.currentTime) delay=Math.min(0.6, startAt-ac.currentTime);
+    if(_bufs.crackle){ _play(_bufs.crackle, 'crackle', 0.5, rand(0.94,1.06), delay, Math.min(1.5, 0.4+(spread||500)/1000)); }
+    else if(_bufsReady){ var c=Math.min(6, n||6); for(var i=0;i<c;i++) _play(pick(_bufs.pop), 'pop', rand(0.08,0.2), rand(0.9,1.15), delay+Math.random()*0.4); }
+  }
+  function garlandSound(count, gapMs){
+    if(!soundOn) return; var ac=audio(); if(!ac || !_bufsReady) return;
+    var gap=(gapMs||65)/1000, t=0.012, total=count||24;
+    /* ladi pops bunch and stutter unevenly, like a real garland —
+       each pop is scheduled at its own audio time, and the voice cap
+       counts overlap in time, so a 38-pop garland is never eaten by
+       a budget meant for a single instant */
+    for(var i=0;i<total;i++){
+      _play(pick(_bufs.pop), 'pop', rand(0.16,0.34)*(0.8+0.4*(i/total)), rand(0.9,1.12), t);
+      if(Math.random()<0.22) _play(pick(_bufs.pop), 'pop', rand(0.07,0.15), rand(0.9,1.1), t+gap*0.4);
+      t+=gap*rand(0.7,1.4);
+      if(Math.random()<0.10) t+=gap*1.6;
+    }
+  }
+
+  /* ================= BURST-TIME SAFETY NET =================
+     Every sound entry and every cracker launch is fail-safe: a
+     WebAudio hiccup on any phone fails silently instead of freezing
+     the burst mid-air, skipping the counter, or killing the loop. */
+  function _safe(fn){ return function(){ try{ return fn.apply(null, arguments); }catch(e){} }; }
+  boom=_safe(boom); pop=_safe(pop); whistle=_safe(whistle); hiss=_safe(hiss);
+  sizzle=_safe(sizzle); whirr=_safe(whirr); garlandSound=_safe(garlandSound); crackleBurst=_safe(crackleBurst);
+
+  /* ================= SCENE ================= */
+  var stageEl=document.getElementById('stage');
+  var _lastRW=0, _lastRH=0;
+  function resize(){
+    if(!stageEl) return;
+    var sw=stageEl.clientWidth, sh=stageEl.clientHeight;
+    if(!sw || !sh) return;
+    if(Math.abs(sw-_lastRW)<2 && Math.abs(sh-_lastRH)<2 && W>0) return;
+    _lastRW=sw; _lastRH=sh;
+    DPR=Math.min(window.devicePixelRatio||1,_dprCap);
+    W=sw; H=sh;
+    canvas.width=Math.round(W*DPR); canvas.height=Math.round(H*DPR);
+    ctx.setTransform(DPR,0,0,DPR,0,0);
+    /* ground strip lives at the bottom of the sky stage only — the dock
+       below the stage can never cover the houses, ground or diyas */
+    groundY=H-Math.max(58, Math.min(118, H*0.26));
+    MAXP=Math.min(_effMaxP(), W<640?Math.min(_effMaxP(),1800):_effMaxP()); /* phone cap on top of tier cap */
+    buildScene();
+  }
+  function buildScene(){
+    var density = PERF_TIER===0 ? 0.55 : PERF_TIER===1 ? 0.8 : 1;
+    stars=[]; var n=Math.floor(W*H/11000*density);
+    for(var i=0;i<n;i++){ stars.push({x:Math.random()*W, y:Math.random()*groundY*0.9, r:rand(0.4,1.5), p:Math.random()*Math.PI*2, sp:rand(0.4,1.6), warm:Math.random()<0.25}); }
+    clouds=[];
+    var nCloud = PERF_TIER===0 ? 3 : 5;
+    for(var ci=0;ci<nCloud;ci++){ clouds.push({x:Math.random()*W, y:rand(20,groundY*0.4), w:rand(140,340), h:rand(16,30), v:rand(0.05,0.16), a:rand(0.05,0.11)}); }
+    farHouses=[]; var fx=-20;
+    while(fx<W+60){ var fw=rand(60,140), fh=rand(30,80); farHouses.push({x:fx,w:fw,h:fh}); fx+=fw+rand(2,10); }
+    houses=[]; var x=-10;
+    while(x<W+40){
+      var hw=rand(56,118), hh=rand(30,70);
+      var wins=[];
+      for(var wy=groundY-hh+9; wy<groundY-11; wy+=14){
+        for(var wx=x+9; wx<x+hw-11; wx+=16){ if(Math.random()<0.6) wins.push({x:wx,y:wy,on:Math.random()<0.78, warm:Math.random()<0.85, fl:Math.random()*Math.PI*2}); }
+      }
+      houses.push({x:x,w:hw,h:hh,wins:wins, tone:rand(0.85,1.15)});
+      x+=hw+rand(5,20);
+    }
+    wires=[];
+    for(var wi2=0; wi2<houses.length-1; wi2++){
+      var a=houses[wi2], b=houses[wi2+1];
+      wires.push({x1:a.x+a.w*0.7, y1:groundY-a.h-8, x2:b.x+b.w*0.3, y2:groundY-b.h-8});
+    }
+    diyas=[]; var dx=16; var diyaGap = PERF_TIER===0 ? 58 : 36;
+    while(dx<W-10){ diyas.push({x:dx, p:Math.random()*Math.PI*2, s:rand(0.85,1.15)}); dx+=rand(diyaGap,diyaGap+24); }
+  }
+
+  /* ================= PARTICLES ================= */
+  function addCount(n){ burstCount+=n; countEl.textContent=burstCount; }
+  function flash(a){ flashEl.style.transition='none'; flashEl.style.opacity=a; requestAnimationFrame(function(){ flashEl.style.transition='opacity .5s'; flashEl.style.opacity=0; }); }
+  function addGlow(x,y,r,glowStr,strength){
+    glows.push({x:x,y:y,r:r,glow:glowStr,life:1,decay:0.045,strength:strength||1});
+    var gMax=PERF_TIER===0?7:PERF_TIER===1?10:14;
+    if(glows.length>gMax) glows.shift();
+  }
+  function addSmoke(x,y,n,big,colorStr){
+    for(var i=0;i<n;i++){
+      smokes.push({x:x+rand(-8,8), y:y+rand(-6,6), vx:rand(-0.25,0.25)+wind*0.5, vy:rand(-0.5,-0.12),
+        r:rand(5,big?20:13), life:1, decay:rand(0.0022,0.005), grow:rand(0.22,0.5), seed:Math.random()*10, col:colorStr||null});
+    }
+    var sMax=PERF_TIER===0?60:PERF_TIER===1?110:160;
+    if(smokes.length>sMax) smokes.splice(0, smokes.length-sMax);
+  }
+  function star(x,y,vx,vy,c,type,size,lifeSec){
+    if(particles.length>=MAXP) return;
+    particles.push({x:x,y:y,px:x,py:y,vx:vx,vy:vy,c:c,type:type||'star',
+      size:size||rand(1.3,2.3), life:1, decay:1/(lifeSec*60), grav:type==='willow'?0.014:0.032,
+      drag:type==='willow'?0.988:0.978, age:0, splitAt:type==='cross'?rand(0.35,0.55):0, seed:Math.random()*100});
+  }
+  /* as the sky fills toward the particle cap, new bursts scale down
+     instead of slamming into a saturated frame — a calm sky still gets
+     the full 230-star shells, a finale volley stays smooth */
+  function burstScale(){
+    var f=particles.length/Math.max(1,MAXP);
+    var base = f>0.8?0.5 : f>0.6?0.7 : f>0.4?0.85 : 1;
+    return base * _effCountScale();
+  }
+  function burstSphere(x,y,sh,count,speed,size,life,type){
+    count=Math.max(6, Math.round(count*burstScale()));
+    for(var i=0;i<count;i++){
+      var ang=Math.random()*Math.PI*2;
+      /* true sphere: uniform shell with slight radius jitter — no flat-disc look */
+      var sp=speed*Math.pow(Math.random(),0.28)*rand(0.82,1.0);
+      star(x,y,Math.cos(ang)*sp,Math.sin(ang)*sp, pick(sh.cols), type, size*rand(0.7,1.25), life*rand(0.75,1.25));
+    }
+  }
+  function burstRing(x,y,sh,count,speed,size,life,tilt){
+    count=Math.max(8, Math.round(count*burstScale()));
+    for(var i=0;i<count;i++){
+      var ang=(i/count)*Math.PI*2 + rand(-0.012,0.012);
+      var vx=Math.cos(ang)*speed, vy=Math.sin(ang)*speed*(tilt||1);
+      star(x,y,vx,vy, sh.cols[i%sh.cols.length], 'star', size, life*rand(0.92,1.08));
+    }
+  }
+  function willow(x,y,sh,count){
+    count=Math.max(10, Math.round(count*burstScale()));
+    for(var i=0;i<count;i++){
+      var ang=Math.random()*Math.PI*2, sp=rand(1.2,5.4)*Math.pow(Math.random(),0.3);
+      star(x,y,Math.cos(ang)*sp,Math.sin(ang)*sp-0.5, pick([[255,213,79],[255,222,130],[255,240,190]]), 'willow', rand(1.1,2.0), rand(2.4,3.8));
+    }
+  }
+  function strobeCore(x,y,sh,count){
+    count=Math.max(6, Math.round(count*burstScale()));
+    for(var i=0;i<count;i++){
+      var ang=Math.random()*Math.PI*2, sp=rand(0.5,2.1);
+      star(x,y,Math.cos(ang)*sp,Math.sin(ang)*sp, pick(sh.cols), 'strobe', rand(1.6,2.6), rand(1.6,2.6));
+    }
+  }
+
+  function launchRocket(tx,ty,big){
+    var sx=tx+rand(-10,10);
+    rockets.push({x:sx,y:groundY+2,px:sx,py:groundY+2,tx:tx,ty:Math.max(46,ty),
+      vx:rand(-0.25,0.25), vy:big?-13.8:-12.2, big:!!big, sh:shell(), wob:Math.random()*10, age:0});
+    addSmoke(sx,groundY,3,big);
+    whistle(big);
+  }
+  function launchPowerRocket(tx,ty,power){
+    var sx=tx+rand(-8,8);
+    rockets.push({x:sx,y:groundY+2,px:sx,py:groundY+2,tx:tx,ty:Math.max(38,ty),
+      vx:rand(-0.2,0.2), vy:power>=2.6?-15.4:-14.7, big:true, power:power, sh:shell(), wob:Math.random()*10, age:0});
+    addSmoke(sx,groundY,PERF_TIER===0?3:5,true);
+    whistle(true);
+    setTimeout(function(){ whistle(true); },170);
+  }
+  function explodeRocket(r){
+    var x=r.x, y=r.y, sh=r.sh;
+    if(r.power && r.power>=2){
+      /* POWER SHELL — Titan / Mega: the biggest burst on the page.
+         Counts still pass through burstScale(), so on a 2GB phone
+         the same shell renders with fewer stars instead of hanging. */
+      var pw=r.power;
+      addGlow(x,y, pw>=2.6?460:400, sh.glow, pw>=2.6?1.7:1.45);
+      addSmoke(x,y, PERF_TIER===0?8:13, true);
+      shocks.push({x:x,y:y,r:8,vr:pw>=2.6?12:10.5,life:1});
+      for(var pfc=0;pfc<(pw>=2.6?34:26);pfc++) star(x,y,rand(-1.3,1.3),rand(-1.3,1.3),[255,255,255],'strobe',rand(2.4,4.0),rand(0.3,0.55));
+      burstSphere(x,y,sh, pw>=2.6?300:250, 9.2, 3.0, 2.1,'star');
+      burstRing(x,y,sh, 84, 7.0, 2.8, 1.9, rand(0.85,1));
+      burstRing(x,y,sh, 56, 5.2, 2.6, 1.7, 1);
+      willow(x,y,sh,120);
+      strobeCore(x,y,sh,36);
+      burstSphere(x,y,sh,70,3.4,2.4,1.5,'cross');
+      flash(pw>=2.6?0.55:0.46); boom(pw>=2.6?3.1:2.65,0); shake=Math.max(shake, pw>=2.6?11:8); addCount(5);
+      setTimeout(function(){ var s2=shell(); burstSphere(x+rand(-44,44),y+rand(-28,28),s2,58,4.2,2.3,1.1,'star'); addGlow(x,y,220,s2.glow,0.85); boom(1.5,0.15); }, rand(300,560));
+      setTimeout(function(){ var s3=shell(); burstRing(x+rand(-20,20),y+rand(-14,14),s3,44,5.4,2.3,1.3,0.9); }, rand(620,900));
+      for(var per=0;per<34;per++) star(x+rand(-16,16),y+rand(-12,12),rand(-0.8,0.8),rand(-0.4,1.0),pick(sh.cols),'willow',rand(0.9,1.7),rand(2.0,3.4));
+      return;
+    }
+    addGlow(x,y, r.big?340:230, sh.glow, r.big?1.25:0.95);
+    addSmoke(x,y, r.big?13:8, r.big);
+    shocks.push({x:x,y:y,r:6,vr:r.big?9:6.5,life:1});
+    /* white-hot flash core — every real burst starts blinding white */
+    for(var fc=0;fc<(r.big?26:14);fc++) star(x,y,rand(-1.2,1.2),rand(-1.2,1.2),[255,255,255],'strobe',rand(2.2,3.6),rand(0.25,0.5));
+    if(r.big){
+      var kind=Math.random();
+      if(kind<0.30){ burstSphere(x,y,sh,230,8.2,2.7,1.9,'star'); burstRing(x,y,sh,72,6.0,2.5,1.6, rand(0.82,1)); strobeCore(x,y,sh,38); burstSphere(x,y,sh,60,3.0,2.2,1.4,'cross'); }
+      else if(kind<0.55){ burstRing(x,y,sh,84,7.4,2.7,2.0,1); burstRing(x,y,sh,58,5.0,2.4,1.8,1); burstSphere(x,y,sh,110,3.2,2.3,1.6,'star'); }
+      else if(kind<0.78){ willow(x,y,sh,170); burstSphere(x,y,sh,90,4.0,2.3,1.3,'star'); burstRing(x,y,sh,40,6.4,2.4,1.5,0.9); }
+      else { burstSphere(x,y,sh,180,7.6,2.6,1.8,'cross'); burstSphere(x,y,sh,80,4.6,2.4,1.5,'star'); strobeCore(x,y,sh,30); }
+      flash(0.38); boom(1.65,0); shake=Math.max(shake,5); addCount(3);
+      /* secondary sympathetic pops — shells within the shell, 300-700ms later */
+      setTimeout(function(){ var sh2=shell(); burstSphere(x+rand(-36,36),y+rand(-24,24),sh2,42,3.6,2.1,1.0,'star'); addGlow(x,y,180,sh2.glow,0.7); }, rand(280,620));
+    } else {
+      var s=Math.random();
+      if(s<0.30){ burstSphere(x,y,sh,150,6.6,2.5,1.7,'star'); burstSphere(x,y,sh,36,2.6,2.1,1.2,'star'); }
+      else if(s<0.52){ burstRing(x,y,sh,62,5.6,2.5,1.7,rand(0.8,1)); burstSphere(x,y,sh,58,2.8,2.2,1.3,'star'); }
+      else if(s<0.72){ willow(x,y,sh,115); burstSphere(x,y,sh,30,3.2,2.0,1.0,'star'); }
+      else if(s<0.88){ burstSphere(x,y,sh,105,5.8,2.4,1.7,'cross'); burstSphere(x,y,sh,44,2.6,2.2,1.4,'star'); }
+      else { burstSphere(x,y,sh,90,6.0,2.4,1.5,'star'); burstRing(x,y,sh,36,4.2,2.3,1.4,1); strobeCore(x,y,sh,18); }
+      flash(0.20); boom(0.95,0.12); addCount(1);
+      if(Math.random()<0.4) setTimeout(function(){ burstSphere(x+rand(-22,22),y+rand(-16,16),shell(),26,3.0,2.0,0.9,'star'); }, rand(220,480));
+    }
+    /* falling ember rain after every burst */
+    for(var er=0;er<(r.big?30:16);er++) star(x+rand(-14,14),y+rand(-10,10),rand(-0.7,0.7),rand(-0.4,0.9),pick(sh.cols),'willow',rand(0.9,1.6),rand(1.8,3.2));
+  }
+
+  function startFountain(x){
+    fountains.push({x:x,y:groundY,life:1,age:0,sh:shell()});
+    sizzle(3.8,0.085); setTimeout(function(){ sizzle(3.2,0.06); },2600);
+    addCount(1);
+  }
+  function startChakra(x){
+    chakras.push({x:x,y:groundY-6,life:1,age:0,ang:0,spin:rand(0.3,0.42)*(Math.random()<0.5?-1:1),vx:0,sh:shell()});
+    whirr(3.6);
+    addCount(1);
+  }
+  function placeBomb(x,size,label){
+    bombs.push({x:x,y:groundY, fuse:1, age:0, size:size||1, label:label||'bomb'});
+    hiss(0.68,0.030); /* sputtering fuse while it burns down */
+    hintEl.classList.add('gone');
+  }
+  function detonateBomb(b){
+    var x=b.x, y=groundY-12; var sz=b.size||1;
+    burstSphere(x,y,{cols:[[255,112,67],[255,213,79],[255,82,82],[255,255,255]]},Math.round(185*sz),8.8*sz,3.1,1.25,'star');
+    burstSphere(x,y,{cols:[[255,255,255],[255,240,190]]},Math.round(40*sz),4.2,2.6,0.6,'strobe');
+    burstRing(x,y,{cols:[[255,213,79],[255,255,255]]},44,7.4,2.7,1.0,0.55);
+    for(var i=0;i<16;i++){ /* dirt & debris kicked up */
+      particles.push({x:x+rand(-6,6),y:groundY,px:x,py:groundY,vx:rand(-2.6,2.6),vy:rand(-6.5,-2),
+        c:[141,110,80],type:'debris',size:rand(1.4,2.8),life:1,decay:rand(0.012,0.02),grav:0.22,drag:0.995,age:0,seed:0});
+    }
+    addGlow(x,y,380*sz,'255,150,60',1.45*sz);
+    addSmoke(x,y-6,18,true);
+    shocks.push({x:x,y:groundY-4,r:8,vr:11*sz,life:1,ground:true});
+    flash(Math.min(0.88,0.58*sz)); shake=Math.min(30,19*sz); boom(2.15*sz,0); addCount(2);
+  }
+  /* ===== NEW MARKET CRACKERS ===== */
+  function startCake(x){ addCount(1); var i=0; var shots=PERF_TIER===0?8:12; var gap=PERF_TIER===0?260:170; var iv=setInterval(function(){ i++; launchRocket(x+rand(-46,46), rand(56,groundY*0.5), i%4===0); if(i>=shots) clearInterval(iv); },gap); }
+  function startRoman(x){ addCount(1); var i=0; var iv2=setInterval(function(){ i++; var y=groundY-40-i*38; var sh=shell(); burstSphere(x+rand(-6,6), y, sh, 28, 3.2, 2.1, 0.9, 'star'); addGlow(x,y,120,sh.glow,0.6); pop(0.18); if(i>=6) clearInterval(iv2); },260); whistle(false); }
+  function startHelicopter(x){ helicopters.push({x:x,y:groundY-10,vy:-1.2,vx:rand(-0.4,0.4),ang:0,life:1,age:0,sh:shell()}); addCount(1); whirr(1.6); hiss(1.2,0.035); }
+  function startParachute(x){ launchRocket(x, rand(70,groundY*0.4), true); setTimeout(function(){ for(var i=0;i<22;i++){ star(x+rand(-30,30), rand(70,130), rand(-0.3,0.3), rand(0.2,0.5), pick([[255,213,79],[255,110,199],[100,255,218]]), 'chute', rand(1.8,2.8), rand(3.2,4.5)); } },900); addCount(1); }
+  function startButterfly(x){ var i=0; var bx=x, by=groundY; var iv3=setInterval(function(){ i++; bx+=rand(-22,22); by-=26; sparklerAt(bx,by,true); if(i>10){ clearInterval(iv3); burstSphere(bx,by,shell(),60,4.6,2.2,1.2,'star'); boom(0.7,0.2); addCount(1);} },110); }
+  function startPeacock(x){ var pc=[]; (T.shells||SHELLS).forEach(function(sh){ pc=pc.concat(sh.cols); }); if(themeName==='classic'||themeName==='festival') pc=[[255,82,82],[255,213,79],[105,240,174],[64,196,255],[255,110,199]]; fountains.push({x:x,y:groundY,life:1,age:0,sh:{cols:pc},peacock:true}); sizzle(3.6,0.065); addCount(1); }
+  function startCrackling(x){ fountains.push({x:x,y:groundY,life:0.85,age:0,sh:{cols:[[255,255,255],[224,224,224],[255,249,196]]},crackling:true}); addCount(1); hiss(1.6,0.05); crackleBurst(26,1300); }
+  function startSnake(x){ snakes.push({x:x,y:groundY,life:1,age:0,seed:Math.random()*10}); addCount(1); hiss(1.4,0.035); }
+  function startSmokeBomb(x){ var cols=['255,80,120','80,200,120','80,160,255','255,170,40','170,100,255']; var c=pick(cols); for(var i=0;i<26;i++) addSmoke(x+rand(-10,10), groundY-rand(4,26), 1, true, c); addGlow(x,groundY-20,150,c,0.5); addCount(1); hiss(1.2,0.04); }
+  function startBijili(x){ addCount(1); garlandSound(18,72); for(var i=0;i<16;i++){ (function(d,dx){ setTimeout(function(){ burstSphere(dx,groundY-6,{cols:[[255,80,80],[255,213,79],[255,255,255]]},14,3.0,1.8,0.55,'star'); },d); })(i*72, x+rand(-16,16)); } }
+  function startLadi(x){ addCount(2); garlandSound(38,62); for(var i=0;i<34;i++){ (function(d,dx){ setTimeout(function(){ burstSphere(dx,groundY-5,{cols:[[255,160,60],[255,80,80],[255,255,255]]},11,2.5,1.7,0.5,'star'); if(Math.random()<0.2) addSmoke(dx,groundY-8,1,false); },d); })(i*62, x-70 + i*4 + rand(-4,4)); } setTimeout(function(){ boom(1.15,0.05); burstSphere(x+72,groundY-10,{cols:[[255,213,79],[255,255,255]]},36,4.2,2.2,0.9,'star'); flash(0.22); }, 34*62+80); }
+  function startPoppop(x){ addCount(1); for(var i=0;i<12;i++){ (function(d,dx,dy){ setTimeout(function(){ burstSphere(dx,dy,{cols:[[255,255,255],[255,213,79]]},6,1.6,1.3,0.35,'star'); pop(0.14); },d); })(i*70, x+rand(-36,36), groundY-rand(2,12)); } }
+  /* ===== POWER RANGE — the loudest crackers on the page ===== */
+  function startLadi10000(x){
+    addCount(3); garlandSound(PERF_TIER===0?52:68, 58);
+    var n=PERF_TIER===0?44:58;
+    for(var i=0;i<n;i++){ (function(d,dx){ setTimeout(function(){ burstSphere(dx,groundY-5,{cols:[[255,170,50],[255,80,80],[255,255,255],[255,213,79]]},12,2.7,1.8,0.55,'star'); if(Math.random()<0.22) addSmoke(dx,groundY-8,1,false); },d); })(i*58, x-92 + i*(184/Math.max(1,n-1)) + rand(-4,4)); }
+    setTimeout(function(){ boom(2.7,0); burstSphere(x+96,groundY-12,{cols:[[255,213,79],[255,255,255],[255,110,60]]},64,5.2,2.5,1.1,'star'); burstRing(x+96,groundY-12,{cols:[[255,213,79],[255,255,255]]},36,5.6,2.3,1.0,0.6); flash(0.4); shake=Math.max(shake,10); }, n*58+100);
+  }
+  function startVolcano(x){
+    fountains.push({x:x,y:groundY,life:1.75,age:0,sh:{cols:[[255,80,40],[255,140,30],[255,213,79],[255,240,170],[255,255,255]]},volcano:true});
+    sizzle(4.2,0.11); setTimeout(function(){ sizzle(3.6,0.09); },2800);
+    addCount(2);
+    var shots=PERF_TIER===0?3:5;
+    for(var vi=0;vi<shots;vi++){ (function(d){ setTimeout(function(){ var vx=x+rand(-54,54); burstSphere(vx,groundY-rand(46,86),shell(),30,3.8,2.2,1.0,'star'); pop(0.3); if(Math.random()<0.6) boom(0.95,0.18); },d); })(700+vi*780+rand(0,260)); }
+    setTimeout(function(){ boom(1.9,0.05); flash(0.3); }, 3400);
+  }
+  /* ===== 100-CRACKER EXPANSION — generic engines for the 72 new types =====
+     Every new cracker reuses the proven primitives (rockets, fountains,
+     chakras, bombs, garlands, cakes) with its own colours, size and
+     sound size — so all 100 stay smooth and audible on a 2GB phone:
+     counts still pass through burstScale() and the perf-tier caps. */
+  function _sh(cols, glow){ return {cols:cols, glow:glow||'255,183,77'}; }
+  var GOLD=[[255,213,79],[255,167,38],[255,243,196]], RED=[[255,82,82],[255,150,80],[255,220,220]], GREEN=[[105,240,174],[178,255,198],[255,255,141]], BLUE=[[64,196,255],[150,200,255],[255,255,255]], SILVER=[[255,255,255],[224,224,224],[255,249,196]], PINK=[[255,110,199],[255,180,230],[255,255,255]], RAINBOW=[[255,82,82],[255,213,79],[105,240,174],[64,196,255],[255,110,199]], ORANGE=[[255,120,40],[255,170,60],[255,240,180]];
+  function launchShellCustom(x,y,big,sh,power){
+    var sx=x+rand(-8,8);
+    rockets.push({x:sx,y:groundY+2,px:sx,py:groundY+2,tx:x,ty:Math.max(40, y<groundY-90? y : rand(52,groundY*0.45)), vx:rand(-0.22,0.22), vy:big?-13.4:-12.2, big:!!big, power:power||0, sh:sh, wob:Math.random()*10, age:0});
+    addSmoke(sx,groundY,3,big); whistle(!!big);
+  }
+  function fountainCustom(x, cols, lifeScale, isVolcano){
+    fountains.push({x:x,y:groundY,life:lifeScale||1,age:0,sh:_sh(cols),volcano:!!isVolcano});
+    sizzle(3.4,0.08); addCount(1);
+  }
+  function chakraCustom(x, cols){
+    chakras.push({x:x,y:groundY-6,life:1,age:0,ang:0,spin:rand(0.34,0.46)*(Math.random()<0.5?-1:1),vx:0,sh:_sh(cols)});
+    whirr(3.6); addCount(1);
+  }
+  function garlandCustom(x, count, gap, finalSize){
+    var cap=PERF_TIER===0?46:PERF_TIER===1?60:76;
+    var n=Math.min(count,cap), g=gap||60;
+    addCount(2); garlandSound(n, g);
+    for(var i=0;i<n;i++){ (function(d,dx){ setTimeout(function(){ burstSphere(dx,groundY-5,{cols:[[255,160,60],[255,80,80],[255,255,255]]},11,2.5,1.7,0.5,'star'); },d); })(i*g, x-80 + i*(160/Math.max(1,n-1)) + rand(-4,4)); }
+    if(finalSize){ setTimeout(function(){ boom(finalSize,0); burstSphere(x+84,groundY-10,{cols:GOLD},44,4.8,2.4,1.0,'star'); flash(0.3); shake=Math.max(shake,Math.min(12,6*finalSize)); }, n*g+100); }
+  }
+  function cakeCustom(x, shots, gap){
+    addCount(1); var i=0;
+    var cap=PERF_TIER===0?9:PERF_TIER===1?14:20;
+    var n=Math.min(shots,cap), g=gap||190;
+    var iv=setInterval(function(){ i++; if(rockets.length<(PERF_TIER===0?7:11)) launchRocket(x+rand(-52,52), rand(56,groundY*0.5), i%4===0); if(i>=n) clearInterval(iv); },g);
+  }
+  function multiBomb(x, size, times){
+    placeBomb(x,size,'bomb');
+    for(var k=1;k<times;k++){ (function(d){ setTimeout(function(){ burstSphere(x+rand(-14,14),groundY-12,{cols:[[255,112,67],[255,213,79],[255,255,255]]},70,6.4,2.6,0.9,'star'); boom(1.5*size,0.05); flash(0.3); shake=Math.max(shake,8*size); addCount(1); },d); })(650+(k-1)*420); }
+  }
+  function pearlRoman(x, cols){
+    addCount(1); var i=0;
+    var iv=setInterval(function(){ i++; var y=groundY-36-i*36; burstSphere(x+rand(-6,6), y, _sh(cols), 24, 3.0, 2.0, 1.1, 'star'); addGlow(x,y,110,'255,200,120',0.55); pop(0.16); if(i>=6) clearInterval(iv); },250);
+    whistle(false);
+  }
+  function confettiAt(x){
+    addCount(1); pop(0.3);
+    burstSphere(x,groundY-24,{cols:RAINBOW},70,5.2,2.2,1.1,'star');
+    burstSphere(x,groundY-24,{cols:SILVER},30,3.4,1.9,0.8,'strobe');
+    addGlow(x,groundY-24,170,'255,150,200',0.7);
+  }
+  var GENERIC={
+    willowrocket:function(x,y){ launchShellCustom(x,y,true,_sh(GOLD,'255,183,77')); setTimeout(function(){ willow(x,Math.max(60,y),_sh(GOLD),90); },650); },
+    silvershell:function(x,y){ launchShellCustom(x,y,true,_sh(SILVER,'238,238,238')); },
+    colourpeony:function(x,y){ launchShellCustom(x,y,true,_sh(RAINBOW,'255,150,200')); },
+    chrysanthemum:function(x,y){ launchShellCustom(x,y,true,_sh(GOLD.concat(PINK),'255,200,120')); setTimeout(function(){ crackleBurst(20,900); },700); },
+    brocade:function(x,y){ launchShellCustom(x,y,true,_sh(GOLD,'255,170,60')); },
+    bluepeony:function(x,y){ launchShellCustom(x,y,false,_sh(BLUE,'100,181,246')); },
+    greendahlia:function(x,y){ launchShellCustom(x,y,true,_sh(GREEN,'105,240,174')); },
+    reddahlia:function(x,y){ launchShellCustom(x,y,true,_sh(RED,'255,82,82')); },
+    salute:function(x,y){ launchShellCustom(x,y,true,_sh(SILVER,'255,255,255')); setTimeout(function(){ boom(1.9,0); flash(0.5); },680); },
+    palmtree:function(x,y){ launchShellCustom(x,y,true,_sh(GOLD.concat(GREEN),'255,190,90')); },
+    doublering:function(x,y){ launchShellCustom(x,y,true,_sh(RAINBOW,'200,160,255')); },
+    heartshell:function(x,y){ launchShellCustom(x,y,true,_sh(PINK.concat(RED),'255,110,199')); },
+    starshell:function(x,y){ launchShellCustom(x,y,true,_sh(GOLD.concat(SILVER),'255,220,130')); },
+    saturn:function(x,y){ launchShellCustom(x,y,true,_sh(BLUE.concat(SILVER),'140,180,255')); },
+    comet:function(x,y){ launchShellCustom(x,y,false,_sh(ORANGE.concat(SILVER),'255,160,60')); },
+    mineshell:function(x){ addCount(1); whistle(false); burstSphere(x,groundY-70,_sh(RAINBOW),64,5.4,2.4,1.1,'star'); addGlow(x,groundY-70,190,'255,180,90',0.8); boom(1.1,0.08); for(var mi=0;mi<14;mi++) star(x,groundY,rand(-0.6,0.6),rand(-9,-6),pick(GOLD),'exhaust',1.8,0.7); },
+    fancake:function(x){ cakeCustom(x,14,230); },
+    zippercake:function(x){ cakeCustom(x,18,120); },
+    cake200:function(x){ cakeCustom(x,20,150); },
+    crossette:function(x,y){ launchShellCustom(x,y,true,_sh(GOLD.concat(RED),'255,180,90')); },
+    deluxechakra:function(x){ chakraCustom(x,GOLD); },
+    discochakra:function(x){ chakraCustom(x,RAINBOW); },
+    ashoka:function(x){ fountainCustom(x,GOLD,1.25); },
+    conefountain:function(x){ fountainCustom(x,ORANGE,1); },
+    silverfountain:function(x){ fountainCustom(x,SILVER,1.1); },
+    goldfountain:function(x){ fountainCustom(x,GOLD,1.1); },
+    tricolour:function(x){ fountainCustom(x,[[255,150,60],[255,255,255],[105,240,174]],1.15); },
+    waterfall:function(x){ fountainCustom(x,SILVER.concat(BLUE),1.3); },
+    minipot:function(x){ fountainCustom(x,GOLD,0.7); },
+    jumbopot:function(x){ fountainCustom(x,GOLD.concat(ORANGE),1.6); },
+    dancingchakra:function(x){ chakraCustom(x,PINK.concat(GOLD)); },
+    whistlingchakra:function(x){ chakraCustom(x,SILVER); whistle(false); setTimeout(function(){ whistle(false); },900); },
+    groundbloom:function(x){ fountainCustom(x,RAINBOW,1.2); },
+    silvercone:function(x){ fountainCustom(x,SILVER,0.95); },
+    colourpot:function(x){ fountainCustom(x,RAINBOW,1.2); },
+    lavafountain:function(x){ fountainCustom(x,ORANGE.concat(RED),1.25,true); },
+    moonfountain:function(x){ fountainCustom(x,BLUE.concat(SILVER),1.1); },
+    turbospinner:function(x){ chakraCustom(x,ORANGE.concat(SILVER)); },
+    bulletbomb:function(x){ placeBomb(x,0.95,'bomb'); },
+    mirchibomb:function(x){ placeBomb(x,1.05,'bomb'); },
+    atombomb:function(x){ placeBomb(x,1.45,'bomb'); },
+    krishnabomb:function(x){ placeBomb(x,1.5,'bomb'); },
+    deluxebomb:function(x){ placeBomb(x,1.6,'bomb'); },
+    doublesound:function(x){ multiBomb(x,1.3,2); },
+    triplesound:function(x){ multiBomb(x,1.25,3); },
+    jumbobomb:function(x){ placeBomb(x,1.85,'bomb'); },
+    bijili100:function(x){ garlandCustom(x,30,70,0); },
+    ladi5000:function(x){ garlandCustom(x,52,58,1.6); },
+    garlanddeluxe:function(x){ garlandCustom(x,44,48,1.3); },
+    clusterbomb:function(x){ multiBomb(x,0.9,3); addCount(1); garlandSound(14,55); },
+    greenbomb:function(x){ placeBomb(x,1.4,'hydrogen'); },
+    superbomb:function(x){ placeBomb(x,1.75,'bomb'); },
+    herobomb:function(x){ placeBomb(x,1.65,'bomb'); },
+    classicbomb:function(x){ placeBomb(x,1.2,'bomb'); },
+    dancingball:function(x){ startCrackling(x); startPoppop(x); },
+    magicwhip:function(x){ addCount(1); crackleBurst(30,1200); hiss(1.2,0.05); for(var wi=0;wi<10;wi++){ (function(d){ setTimeout(function(){ sparklerAt(x+rand(-40,40),groundY-rand(4,26),false); pop(0.12); },d); })(wi*110); } },
+    electricstone:function(x){ fountains.push({x:x,y:groundY,life:0.9,age:0,sh:_sh(BLUE.concat(SILVER)),crackling:true}); addCount(1); crackleBurst(24,1100); hiss(1.4,0.05); },
+    twinklingstar:function(x,y){ addCount(1); sparking=true; sparkX=x; sparkY=Math.min(y,groundY-30); sparklerAt(sparkX,sparkY,true); setTimeout(function(){ sparking=false; },900); },
+    colourpearl:function(x){ pearlRoman(x,RAINBOW); },
+    partypopper:function(x){ confettiAt(x); },
+    confettiblast:function(x){ confettiAt(x); setTimeout(function(){ confettiAt(x+rand(-30,30)); },280); },
+    skylantern:function(x){ startParachute(x); },
+    pencil:function(x,y){ launchShellCustom(x,y,false,_sh(ORANGE,'255,160,60')); },
+    rainpearl:function(x){ pearlRoman(x,SILVER.concat(PINK)); },
+    fogsmoke:function(x){ startSmokeBomb(x); setTimeout(function(){ startSmokeBomb(x+rand(-24,24)); },500); },
+    musicalfountain:function(x){ fountainCustom(x,RAINBOW,1.2); whistle(false); setTimeout(function(){ whistle(false); },1200); },
+    earthquake:function(x){ placeBomb(x,3.0,'thunder'); },
+    tsunami:function(x){ cakeCustom(x,20,130); },
+    dragonshell:function(x,y){ launchShellCustom(x,y,true,_sh(GREEN.concat(GOLD),'140,255,170'),2.5); },
+    phoenix:function(x,y){ launchShellCustom(x,y,true,_sh(ORANGE.concat(RED),'255,130,60'),2.45); },
+    ladi20000:function(x){ garlandCustom(x,76,52,2.7); },
+    supernova:function(x,y){ launchShellCustom(x,y,true,_sh(RAINBOW.concat(SILVER),'220,200,255'),3.1); }
+  };
+  /* ===== SKY WRITING — text made of sparks ===== */
+  var WISH_COLS=[[255,213,79],[255,110,199],[100,255,218],[255,160,60],[255,255,255]];
+  var wishSeq=0;
+  /* split into two balanced lines, breaking only at spaces — never mid-word */
+  function wrapWishWords(text, meas, softWidth){
+    var words=text.split(' ');
+    if(words.length<2) return [text];
+    if(meas.measureText(text).width<=softWidth) return [text];
+    var best=null;
+    for(var i=1;i<words.length;i++){
+      var a=words.slice(0,i).join(' '), b=words.slice(i).join(' ');
+      var m=Math.max(meas.measureText(a).width, meas.measureText(b).width);
+      if(!best || m<best.m) best={m:m, lines:[a,b]};
+    }
+    return best?best.lines:[text];
+  }
+  function sampleWishLine(text, fs, step){
+    var off=document.createElement('canvas'); var o=off.getContext('2d');
+    o.font='800 '+fs+'px "Baloo 2", sans-serif';
+    var w=Math.ceil(o.measureText(text).width)+20, h=Math.ceil(fs*1.32);
+    off.width=w; off.height=h;
+    o.font='800 '+fs+'px "Baloo 2", sans-serif'; o.fillStyle='#fff'; o.textBaseline='middle'; o.textAlign='center';
+    o.fillText(text, w/2, h/2+2);
+    var data; try{ data=o.getImageData(0,0,w,h).data; }catch(e){ return {pts:[], w:w, h:h}; }
+    var pts=[];
+    for(var yy=2; yy<h; yy+=step){ for(var xx=0; xx<w; xx+=step){ if(data[(yy*w+xx)*4+3]>120) pts.push({x:xx,y:yy}); } }
+    return {pts:pts, w:w, h:h};
+  }
+  function showWish(raw){
+    audio();
+    var typed=(raw||'').replace(/\s+/g,' ').trim().toUpperCase();
+    /* hard cap only at a word boundary — the text is never cut mid-word */
+    if(typed.length>40){ var cut=typed.slice(0,40); var lsp=cut.lastIndexOf(' '); typed=(lsp>=12)?cut.slice(0,lsp):cut; }
+    var userText=(typed && typed!=='HAPPY DIWALI') ? typed : '';
+    var seq=++wishSeq;
+    var fs=86, lineH=fs*1.14;
+    var meas=document.createElement('canvas').getContext('2d');
+    meas.font='800 '+fs+'px "Baloo 2", sans-serif';
+    var availW=Math.max(180, W*0.94);
+    var hdLines=['HAPPY DIWALI'];
+    var userLines=userText ? wrapWishWords(userText, meas, availW*1.55) : [];
+    var allLines=hdLines.concat(userLines);
+    var blockW=0;
+    allLines.forEach(function(L){ blockW=Math.max(blockW, meas.measureText(L).width+20); });
+    var blockH=lineH*allLines.length;
+    var sy=Math.max(44, H*0.07);
+    var availH=Math.max(96, (groundY-54)-sy);
+    /* auto-shrink: the whole block always fits the sky, phone or desktop */
+    var scale=Math.min(availW/blockW, availH/blockH, 1);
+    var step=PERF_TIER===0?8:6, sampled=null, total=0;
+    var wishCap=PERF_TIER===0?620:980, wishHard=PERF_TIER===0?850:1400;
+    for(var attempt=0; attempt<5; attempt++){
+      sampled=allLines.map(function(L){ return sampleWishLine(L, fs, step); });
+      total=0; sampled.forEach(function(s){ total+=s.pts.length; });
+      if(total<=wishCap || step>=12) break;
+      step+=2;
+    }
+    if(sampled && total>wishHard){ /* cap sky-writing stars so long text can never flood the frame */
+      var keepP=wishHard/total;
+      sampled.forEach(function(sm2){ sm2.pts=sm2.pts.filter(function(){ return Math.random()<keepP; }); });
+    }
+    if(!sampled) return;
+    var dotR=Math.max(1.15, Math.min(2.3, step*scale*0.34));
+    function emit(li, lifeSec){
+      var s=sampled[li]; if(!s) return;
+      var lineX=W/2-(s.w*scale)/2, lineY=sy + li*lineH*scale;
+      s.pts.forEach(function(p){
+        textStars.push({x:lineX+p.x*scale, y:lineY+p.y*scale, life:1, decay:1/(60*lifeSec),
+          seed:Math.random()*10, col:pick(T.wishCols||WISH_COLS),
+          delay:(p.x/Math.max(1,s.w))*14+Math.random()*4, r:dotR});
+      });
+    }
+    /* PHASE 1 — “Happy Diwali” appears FIRST, on its own */
+    textStars=[];
+    emit(0, userLines.length ? 9.6 : 7.2);
+    addGlow(W/2, sy+(lineH*scale)/2, 320, T.horizon, 0.9);
+    boom(1.1,0); crackleBurst(12,800); flash(0.22); addCount(3);
+    launchRocket(W*0.22, sy+30);
+    hintEl.classList.add('gone');
+    /* PHASE 2 — the user's typed text appears UNDERNEATH it, ~2.4s later,
+       then both stay readable together for about 7 seconds, fading slowly */
+    if(userLines.length){
+      setTimeout(function(){
+        if(seq!==wishSeq) return;
+        for(var li2=0; li2<userLines.length; li2++) emit(1+li2, 7);
+        addGlow(W/2, sy+lineH*scale*1.5, 280, T.horizon, 0.75);
+        crackleBurst(10,700); pop(0.2);
+        setTimeout(function(){ launchRocket(W*0.78, sy+30, true); },200);
+      }, 2400);
+    } else {
+      setTimeout(function(){ if(seq===wishSeq) launchRocket(W*0.78, sy+30, true); },260);
+    }
+  }
+  showWish=_safe(showWish);
+  var _lastSparkSnd=0;
+  var _lastAmbPop=0; /* ambient dying-star pops are hard-throttled: unthrottled they fired per-particle per-frame and flooded the audio path mid-show */
+  function sparklerAt(x,y,big){
+    var n=big?13:8;
+    for(var i=0;i<n;i++){
+      var ang=Math.random()*Math.PI*2, sp=rand(0.3,3.6);
+      star(x,y,Math.cos(ang)*sp,Math.sin(ang)*sp+0.4, pick([[255,249,196],[255,213,79],[255,255,255],[255,204,128]]), 'spark', rand(0.7,1.9), rand(0.3,0.9));
+    }
+    /* branching spark trails — the fizzy star-burst a real phuljhadi throws */
+    if(Math.random()<0.35){ var ba=Math.random()*Math.PI*2; for(var b2=0;b2<4;b2++) star(x,y,Math.cos(ba+b2*0.35)*rand(1.6,3.2),Math.sin(ba+b2*0.35)*rand(1.6,3.2),[255,240,180],'spark',1.0,0.45); }
+    if(Math.random()<0.3) addSmoke(x,y-2,1,false);
+    var nowMs=performance.now();
+    if(soundOn && nowMs-_lastSparkSnd>340){ _lastSparkSnd=nowMs; sizzle(0.34,0.045); }
+    else if(soundOn && Math.random()<0.14) pop(0.035);
+  }
+
+  /* ================= INTERACTION ================= */
+  function canvasPos(e){ var r=canvas.getBoundingClientRect(); return {x:e.clientX-r.left, y:e.clientY-r.top}; }
+  function lightAt(x,y){
+    hintEl.classList.add('gone');
+    if(GENERIC[mode]){ GENERIC[mode](x,y); return; }
+    if(mode==='rocket'){ launchRocket(x, y<groundY-90? y : rand(70,groundY*0.5)); }
+    else if(mode==='skyshot'){ launchRocket(x, y<groundY-90? y : rand(56,groundY*0.42), true); }
+    else if(mode==='flowerpot'){ startFountain(x); }
+    else if(mode==='chakra'){ startChakra(x); }
+    else if(mode==='bomb'){ placeBomb(x,1,'bomb'); }
+    else if(mode==='hydrogen'){ placeBomb(x,1.7,'hydrogen'); }
+    else if(mode==='sutli'){ placeBomb(x,1.35,'sutli'); }
+    else if(mode==='lakshmi'){ placeBomb(x,1.15,'lakshmi'); }
+    else if(mode==='cake'){ startCake(x); }
+    else if(mode==='roman'){ startRoman(x); }
+    else if(mode==='helicopter'){ startHelicopter(x); }
+    else if(mode==='parachute'){ startParachute(x); }
+    else if(mode==='butterfly'){ startButterfly(x); }
+    else if(mode==='peacock'){ startPeacock(x); }
+    else if(mode==='crackling'){ startCrackling(x); }
+    else if(mode==='snake'){ startSnake(x); }
+    else if(mode==='smoke'){ startSmokeBomb(x); }
+    else if(mode==='bijili'){ startBijili(x); }
+    else if(mode==='ladi'){ startLadi(x); }
+    else if(mode==='poppop'){ startPoppop(x); }
+    else if(mode==='titan'){ launchPowerRocket(x, y<groundY-90? y : rand(52,groundY*0.38), 2.2); }
+    else if(mode==='megashell'){ launchPowerRocket(x, y<groundY-90? y : rand(48,groundY*0.34), 2.9); }
+    else if(mode==='thunder'){ placeBomb(x,2.7,'thunder'); }
+    else if(mode==='sultan'){ placeBomb(x,2.25,'sultan'); }
+    else if(mode==='ladi10000'){ startLadi10000(x); }
+    else if(mode==='volcano'){ startVolcano(x); }
+    else if(mode==='wish'){ var inp=document.getElementById('wishInput'); showWish(inp?inp.value:''); }
+    else if(mode==='sparkler'){ sparking=true; sparkX=x; sparkY=y; sparklerAt(x,y,true); }
+  }
+  lightAt=_safe(lightAt); sparklerAt=_safe(sparklerAt);
+  canvas.addEventListener('pointerdown', function(e){ e.preventDefault(); audio(); var p=canvasPos(e); lightAt(p.x,p.y); });
+  canvas.addEventListener('pointermove', function(e){
+    if(mode==='sparkler' && sparking){ var p=canvasPos(e); sparkX=p.x; sparkY=p.y; sparklerAt(p.x,p.y,false); }
+  });
+  window.addEventListener('pointerup', function(){ sparking=false; });
+  canvas.addEventListener('pointerleave', function(){ sparking=false; });
+
+  var crackerBtns=document.querySelectorAll('.cracker');
+  crackerBtns.forEach(function(b){
+    b.addEventListener('click', function(){
+      crackerBtns.forEach(function(o){ o.classList.remove('active'); o.setAttribute('aria-pressed','false'); });
+      b.classList.add('active'); b.setAttribute('aria-pressed','true');
+      mode=b.getAttribute('data-type');
+      audio();
+    });
+  });
+  document.getElementById('soundBtn').addEventListener('click', function(){
+    soundOn=!soundOn;
+    this.textContent=soundOn?'🔊 Sound on':'🔇 Sound off';
+    this.setAttribute('aria-pressed', String(soundOn));
+    if(masterGain && AC){ try{ masterGain.gain.setTargetAtTime(soundOn?1.12:0, AC.currentTime, 0.02); }catch(e){} }
+    if(soundOn){ audio(); pop(0.15); }
+  });
+  document.getElementById('clearBtn').addEventListener('click', function(){
+    particles=[]; rockets=[]; fountains=[]; chakras=[]; smokes=[]; glows=[]; shocks=[]; bombs=[]; textStars=[]; helicopters=[]; snakes=[];
+  });
+  var wishInputEl=document.getElementById('wishInput');
+  var wishCountEl=document.getElementById('wishCount');
+  function updateWishCount(){
+    if(!wishCountEl) return;
+    var n=(wishInputEl.value||'').length;
+    wishCountEl.textContent=n+'/40';
+    wishCountEl.classList.toggle('full', n>=40);
+  }
+  wishInputEl.addEventListener('input', updateWishCount);
+  updateWishCount();
+  document.getElementById('wishShowBtn').addEventListener('click', function(){ showWish(wishInputEl.value); });
+  document.getElementById('wishDiwaliBtn').addEventListener('click', function(){ wishInputEl.value='HAPPY DIWALI'; updateWishCount(); showWish('HAPPY DIWALI'); });
+  wishInputEl.addEventListener('keydown', function(e){ if(e.key==='Enter'){ e.preventDefault(); showWish(wishInputEl.value); } });
+  function setTheme(name, celebrate){
+    if(!THEMES[name]) return;
+    themeName=name; T=THEMES[name];
+    document.body.setAttribute('data-theme', name);
+    document.querySelectorAll('[data-theme-btn]').forEach(function(b){
+      var on=b.getAttribute('data-theme-btn')===name;
+      b.classList.toggle('active', on); b.setAttribute('aria-pressed', String(on));
+    });
+    var note=document.getElementById('themeNote'); if(note) note.textContent=T.note;
+    if(celebrate && W>0){
+      addGlow(W/2, groundY*0.42, 300, T.horizon, 1);
+      launchRocket(W*0.3, groundY*0.34, false);
+      setTimeout(function(){ launchRocket(W*0.68, groundY*0.28, true); },220);
+      if(mode==='wish'){ /* keep mode, nothing else */ }
+    }
+  }
+  document.querySelectorAll('[data-theme-btn]').forEach(function(tb){
+    tb.addEventListener('click', function(){ audio(); setTheme(tb.getAttribute('data-theme-btn'), true); });
+  });
+  document.querySelectorAll('.filter').forEach(function(fb){
+    fb.addEventListener('click', function(){
+      document.querySelectorAll('.filter').forEach(function(o){ o.classList.remove('active'); });
+      fb.classList.add('active');
+      var f=fb.getAttribute('data-filter');
+      crackerBtns.forEach(function(b){
+        var cats=(b.getAttribute('data-cat')||'').split(' ');
+        b.style.display=(f==='all' || cats.indexOf(f)>-1) ? '' : 'none';
+      });
+    });
+  });
+  function burstTen(){
+    audio(); _resumeAC();
+    var gap=PERF_TIER===0?230:PERF_TIER===1?180:140;
+    for(var i=0;i<10;i++){
+      (function(d){ setTimeout(function(){
+        if(rockets.length>=(PERF_TIER===0?6:10)) return; /* never pile onto a busy sky */
+        var x=rand(W*0.08,W*0.92), y=rand(56,groundY*0.55);
+        launchRocket(x,y,Math.random()<0.3);
+      }, d); })(i*gap);
+    }
+  }
+  document.getElementById('burstAllBtn').addEventListener('click', burstTen);
+
+  var finaleBtn=document.getElementById('finaleBtn');
+  finaleBtn.addEventListener('click', function(){
+    audio();
+    if(finaleTimer){
+      clearInterval(finaleTimer); finaleTimer=null;
+      finaleBtn.textContent='🎇 Grand Finale'; finaleBtn.classList.remove('playing');
+      return;
+    }
+    finaleBtn.textContent='⏹ Stop Finale'; finaleBtn.classList.add('playing');
+    var step=0;
+    var maxRockets=PERF_TIER===0?6:PERF_TIER===1?8:11;
+    var finaleGap=PERF_TIER===0?520:PERF_TIER===1?430:360;
+    finaleTimer=setInterval(function(){
+      step++;
+      _resumeAC(); /* a suspended context mid-finale = silent crackers; revive every beat */
+      /* never launch into a full sky: if rockets / fountains / chakras
+         are already stacked up, this beat is skipped instead of piling
+         more particles and booms onto a saturated frame — that pile-up
+         was the hang, and the audio overload that killed the sound */
+      if(rockets.length<maxRockets){
+        var x=rand(W*0.06,W*0.94), y=rand(52,groundY*0.55);
+        if(step===43){ launchPowerRocket(W*0.5, groundY*0.3, 2.9); }
+        else if(step%12===0){ launchPowerRocket(x, y, 2.2); }
+        else launchRocket(x,y, step%4===0);
+        if(step%9===0 && rockets.length<maxRockets){ launchRocket(rand(W*0.1,W*0.9), rand(52,groundY*0.5), false); }
+      }
+      if(step%5===0 && fountains.length<(PERF_TIER===0?1:2)){ startFountain(rand(W*0.1,W*0.9)); }
+      if(step%7===0 && chakras.length<(PERF_TIER===0?1:2)){ startChakra(rand(W*0.1,W*0.9)); }
+      if(step>=44){ clearInterval(finaleTimer); finaleTimer=null; finaleBtn.textContent='🎇 Grand Finale'; finaleBtn.classList.remove('playing'); }
+    },finaleGap);
+  });
+
+  /* ================= RENDER ================= */
+  var t=0, lastNow=performance.now();
+  var _fpsEma=16.7, _fpsCheckAt=0;
+  /* the next frame is booked FIRST and the frame body is fail-safe:
+     one bad frame while crackers are blowing can never stop the sky */
+  function draw(now){
+    requestAnimationFrame(draw);
+    if(document.hidden) { lastNow=now||performance.now(); return; } /* no CPU/battery burn in background */
+    try{ drawFrame(now); }catch(e){ try{ ctx.restore(); }catch(ignore){} }
+  }
+  function drawFrame(now){
+    var dtMs=now-lastNow; lastNow=now;
+    /* FPS watchdog: if frames average slower than ~42fps for a stretch,
+       step the quality down (fewer particles, flat rendering, lower
+       cap) until the phone is smooth again. This is what makes the
+       SAME page run on a flagship and on a 2GB phone. */
+    if(dtMs>0 && dtMs<250){ _fpsEma=_fpsEma*0.92+dtMs*0.08; }
+    if(now-_fpsCheckAt>2500){
+      _fpsCheckAt=now;
+      if(_fpsEma>24 && _qualityDrop<2){ _qualityDrop++; MAXP=_effMaxP(); if(_qualityDrop>=1) document.documentElement.classList.add('lowperf'); }
+      else if(_fpsEma<15 && _qualityDrop>0){ _qualityDrop--; MAXP=_effMaxP(); }
+    }
+    var dt=Math.min(2.2, Math.max(0.4, dtMs/16.7)); /* frame-rate independent-ish */
+    t+=0.016*dt;
+    wind=0.12+Math.sin(t*0.11)*0.10;
+    ctx.save();
+    if(shake>0.3){ ctx.translate(rand(-shake,shake)*0.6, rand(-shake,shake)*0.6); shake*=Math.pow(0.88,dt); } else { shake=0; }
+    /* adaptive quality: under heavy load (finale volleys) the frame
+       drops its priciest gradient passes — smoke puffs, ground glow
+       pools, bulb halos, particle hot cores — and draws flat instead.
+       Every burst and particle still renders; the frame just stops
+       paying for hundreds of radial gradients per frame, which is
+       what made phones hang mid-finale. Calm sky = full quality. */
+    var cheapThreshold = PERF_TIER===0 ? 550 : PERF_TIER===1 ? 1100 : 1900;
+    var cheapFx = _qualityDrop>=1 || particles.length>cheapThreshold || smokes.length>(PERF_TIER===0?40:110);
+
+    /* --- sky: deep night with horizon city-glow --- */
+    var g=ctx.createLinearGradient(0,0,0,groundY);
+    g.addColorStop(0,T.sky[0]); g.addColorStop(0.5,T.sky[1]); g.addColorStop(0.85,T.sky[2]); g.addColorStop(1,T.sky[3]);
+    ctx.fillStyle=g; ctx.fillRect(-24,-24,W+48,groundY+24);
+    var hg=ctx.createRadialGradient(W*0.5,groundY,10,W*0.5,groundY,W*0.62);
+    hg.addColorStop(0,'rgba('+T.horizon+',0.12)'); hg.addColorStop(1,'rgba('+T.horizon+',0)');
+    ctx.fillStyle=hg; ctx.fillRect(0,groundY-260,W,260);
+
+    /* --- stars (dim near horizon, like a real sky) --- */
+    for(var i=0;i<stars.length;i++){
+      var s=stars[i]; var tw=0.35+0.65*Math.abs(Math.sin(t*s.sp+s.p));
+      var horizonDim=1-(s.y/groundY)*0.55;
+      ctx.globalAlpha=tw*horizonDim*0.9;
+      ctx.fillStyle=s.warm?'#ffe9c4':'#eef2ff';
+      ctx.beginPath(); ctx.arc(s.x,s.y,s.r,0,7); ctx.fill();
+    }
+    ctx.globalAlpha=1;
+
+    /* --- moon with halo + maria (kept clear of the top-bar chips) --- */
+    var mx=W-52, my=(W<640?124:88);
+    var mg=ctx.createRadialGradient(mx,my,10,mx,my,74);
+    mg.addColorStop(0,'rgba(253,246,216,0.20)'); mg.addColorStop(1,'rgba(253,246,216,0)');
+    ctx.fillStyle=mg; ctx.beginPath(); ctx.arc(mx,my,74,0,7); ctx.fill();
+    ctx.beginPath(); ctx.arc(mx,my,23,0,7); ctx.fillStyle=T.moon; ctx.fill();
+    ctx.fillStyle='rgba(190,182,150,0.5)';
+    ctx.beginPath(); ctx.arc(mx-7,my-5,5.5,0,7); ctx.fill();
+    ctx.beginPath(); ctx.arc(mx+6,my+7,4,0,7); ctx.fill();
+    ctx.beginPath(); ctx.arc(mx+9,my-9,3,0,7); ctx.fill();
+    ctx.beginPath(); ctx.arc(mx-2,my+12,2.6,0,7); ctx.fill();
+    /* crescent shadow for depth */
+    ctx.beginPath(); ctx.arc(mx+13,my-7,19,0,7); ctx.fillStyle='rgba(7,10,24,0.16)'; ctx.fill();
+
+    /* --- drifting clouds, lit from below by glows --- */
+    for(var ci=0;ci<clouds.length;ci++){
+      var cl=clouds[ci]; cl.x+=cl.v*dt; if(cl.x-cl.w>W) cl.x=-cl.w;
+      ctx.fillStyle='rgba('+T.cloud+','+cl.a+')';
+      ctx.beginPath(); ctx.ellipse(cl.x,cl.y,cl.w/2,cl.h,0,0,7); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(cl.x-cl.w*0.24,cl.y+4,cl.w/3.4,cl.h*0.75,0,0,7); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(cl.x+cl.w*0.26,cl.y+3,cl.w/3.8,cl.h*0.7,0,0,7); ctx.fill();
+    }
+
+    /* --- burst glows wash the whole scene (behind skyline) --- */
+    ctx.globalCompositeOperation='lighter';
+    for(var gi=glows.length-1; gi>=0; gi--){
+      var gl=glows[gi]; gl.life-=gl.decay*dt;
+      if(gl.life<=0){ glows.splice(gi,1); continue; }
+      var gg=ctx.createRadialGradient(gl.x,gl.y,0,gl.x,gl.y,gl.r);
+      gg.addColorStop(0,'rgba('+gl.glow+','+(0.30*gl.life*gl.strength)+')');
+      gg.addColorStop(0.45,'rgba('+gl.glow+','+(0.10*gl.life*gl.strength)+')');
+      gg.addColorStop(1,'rgba('+gl.glow+',0)');
+      ctx.fillStyle=gg; ctx.beginPath(); ctx.arc(gl.x,gl.y,gl.r,0,7); ctx.fill();
+    }
+    ctx.globalCompositeOperation='source-over';
+
+    /* --- far skyline (atmospheric, blurred by distance) --- */
+    ctx.fillStyle=T.far;
+    for(var fi=0;fi<farHouses.length;fi++){ var fh=farHouses[fi]; ctx.fillRect(fh.x, groundY-fh.h, fh.w, fh.h); }
+
+    /* --- string lights sagging between roofs --- */
+    for(var wri=0;wri<wires.length;wri++){
+      var wr=wires[wri];
+      ctx.strokeStyle='rgba(0,0,0,0.55)'; ctx.lineWidth=1.2;
+      ctx.beginPath(); ctx.moveTo(wr.x1,wr.y1);
+      ctx.quadraticCurveTo((wr.x1+wr.x2)/2, Math.max(wr.y1,wr.y2)+13, wr.x2, wr.y2); ctx.stroke();
+      var steps=Math.max(3, Math.floor(Math.abs(wr.x2-wr.x1)/17));
+      for(var bs=1;bs<steps;bs++){
+        var u=bs/steps;
+        var bx2=(1-u)*(1-u)*wr.x1 + 2*(1-u)*u*((wr.x1+wr.x2)/2) + u*u*wr.x2;
+        var by2=(1-u)*(1-u)*wr.y1 + 2*(1-u)*u*(Math.max(wr.y1,wr.y2)+13) + u*u*wr.y2;
+        var bc=T.bulbs[(bs+wri)%T.bulbs.length];
+        var flick=0.82+0.18*Math.sin(t*3+bs*1.7+wri);
+        if(!cheapFx){
+          var bg2=ctx.createRadialGradient(bx2,by2+3,0,bx2,by2+3,7);
+          bg2.addColorStop(0,bc); bg2.addColorStop(1,'rgba(0,0,0,0)');
+          ctx.globalAlpha=0.5*flick; ctx.fillStyle=bg2; ctx.beginPath(); ctx.arc(bx2,by2+3,7,0,7); ctx.fill();
+        }
+        ctx.globalAlpha=1; ctx.fillStyle=bc; ctx.beginPath(); ctx.arc(bx2,by2+3,1.7,0,7); ctx.fill();
+      }
+    }
+
+    /* --- near houses --- */
+    var litR=0,litG=0,litB=0,litA=0;
+    if(glows.length){ var g0=glows[glows.length-1]; litA=g0.life*0.20; }
+    for(var hi=0; hi<houses.length; hi++){
+      var hs=houses[hi];
+      ctx.fillStyle=T.house; ctx.fillRect(hs.x, groundY-hs.h, hs.w, hs.h);
+      if(litA>0.01){ ctx.fillStyle='rgba('+T.horizon+','+litA*hs.tone+')'; ctx.fillRect(hs.x, groundY-hs.h, hs.w, hs.h); }
+      ctx.fillStyle=T.roof;
+      ctx.beginPath(); ctx.moveTo(hs.x-4,groundY-hs.h); ctx.lineTo(hs.x+hs.w/2,groundY-hs.h-14); ctx.lineTo(hs.x+hs.w+4,groundY-hs.h); ctx.closePath(); ctx.fill();
+      /* parapet + water tank silhouettes */
+      ctx.fillStyle=T.house;
+      if(hs.w>80){ ctx.fillRect(hs.x+hs.w*0.62, groundY-hs.h-20, 13, 8); }
+      for(var wi=0; wi<hs.wins.length; wi++){
+        var wn=hs.wins[wi];
+        if(wn.on){
+          var wf=0.86+0.14*Math.sin(t*0.7+wn.fl);
+          ctx.fillStyle=wn.warm?('rgba(255,196,86,'+(0.92*wf)+')'):('rgba(190,220,255,'+(0.85*wf)+')');
+          ctx.fillRect(wn.x,wn.y,7,9);
+          ctx.fillStyle='rgba(0,0,0,0.25)'; ctx.fillRect(wn.x+3,wn.y,1,9);
+        } else { ctx.fillStyle='rgba(255,255,255,0.05)'; ctx.fillRect(wn.x,wn.y,7,9); }
+      }
+    }
+
+    /* --- ground: dark earth with warm sheen --- */
+    var gg2=ctx.createLinearGradient(0,groundY,0,H);
+    gg2.addColorStop(0,T.ground[0]); gg2.addColorStop(1,T.ground[1]);
+    ctx.fillStyle=gg2; ctx.fillRect(-24,groundY,W+48,H-groundY+24);
+    ctx.fillStyle='rgba('+T.groundLine+',0.16)'; ctx.fillRect(-24,groundY,W+48,1.5);
+    /* glow reflections pooling on the ground */
+    ctx.globalCompositeOperation='lighter';
+    for(var gri=0;gri<glows.length && !cheapFx;gri++){
+      var gl2=glows[gri];
+      var rg=ctx.createRadialGradient(gl2.x,groundY+8,0,gl2.x,groundY+8,gl2.r*0.7);
+      rg.addColorStop(0,'rgba('+gl2.glow+','+(0.10*gl2.life)+')'); rg.addColorStop(1,'rgba('+gl2.glow+',0)');
+      ctx.fillStyle=rg;
+      ctx.save(); ctx.translate(gl2.x,groundY+8); ctx.scale(1,0.22); ctx.translate(-gl2.x,-(groundY+8));
+      ctx.beginPath(); ctx.arc(gl2.x,groundY+8,gl2.r*0.7,0,7); ctx.fill(); ctx.restore();
+    }
+    ctx.globalCompositeOperation='source-over';
+
+    /* --- lingering smoke (behind fireworks, above houses) --- */
+    for(var si=smokes.length-1; si>=0; si--){
+      var sm=smokes[si];
+      sm.x+=(sm.vx+wind*0.55)*dt; sm.y+=sm.vy*dt; sm.r+=sm.grow*dt; sm.life-=sm.decay*dt;
+      if(sm.life<=0){ smokes.splice(si,1); continue; }
+      var sa= sm.col? 0.34*sm.life : 0.13*sm.life;
+      if(cheapFx){
+        /* flat puff under load — no per-puff gradient */
+        ctx.fillStyle= sm.col? ('rgba('+sm.col+','+(sa*0.55)+')') : ('rgba(132,134,152,'+(sa*0.6)+')');
+        ctx.beginPath(); ctx.arc(sm.x,sm.y,sm.r,0,7); ctx.fill();
+      } else {
+        var puff=ctx.createRadialGradient(sm.x,sm.y,0,sm.x,sm.y,sm.r);
+        if(sm.col){ puff.addColorStop(0,'rgba('+sm.col+','+sa+')'); puff.addColorStop(0.6,'rgba('+sm.col+','+(sa*0.6)+')'); puff.addColorStop(1,'rgba('+sm.col+',0)'); }
+        else { puff.addColorStop(0,'rgba(148,150,168,'+sa+')'); puff.addColorStop(0.6,'rgba(120,122,140,'+(sa*0.6)+')'); puff.addColorStop(1,'rgba(110,112,130,0)'); }
+        ctx.fillStyle=puff; ctx.beginPath(); ctx.arc(sm.x,sm.y,sm.r,0,7); ctx.fill();
+      }
+      /* fresh smoke catches firelight */
+      if(!cheapFx && glows.length && sm.life>0.6){
+        var gl3=glows[glows.length-1];
+        var dxs=sm.x-gl3.x, dys=sm.y-gl3.y;
+        if(dxs*dxs+dys*dys < gl3.r*gl3.r){
+          ctx.fillStyle='rgba('+gl3.glow+','+(0.08*gl3.life)+')';
+          ctx.beginPath(); ctx.arc(sm.x,sm.y,sm.r*0.8,0,7); ctx.fill();
+        }
+      }
+    }
+
+    /* --- shockwaves --- */
+    for(var shi=shocks.length-1; shi>=0; shi--){
+      var sk=shocks[shi]; sk.r+=sk.vr*dt; sk.vr*=Math.pow(0.94,dt); sk.life-=0.035*dt;
+      if(sk.life<=0){ shocks.splice(shi,1); continue; }
+      ctx.strokeStyle='rgba(255,240,210,'+(0.28*sk.life)+')'; ctx.lineWidth=2;
+      ctx.beginPath();
+      if(sk.ground){ ctx.ellipse(sk.x,sk.y,sk.r,sk.r*0.30,0,0,7); } else { ctx.arc(sk.x,sk.y,sk.r,0,7); }
+      ctx.stroke();
+    }
+
+    /* --- bombs waiting on their fuse --- */
+    for(var bi=bombs.length-1; bi>=0; bi--){
+      var bm=bombs[bi]; bm.age+=dt; bm.fuse-=dt/38; /* ~0.65s fuse */
+      var bx=bm.x, by=groundY;
+      /* string / atom-bomb body lying on the ground */
+      var bodyCol = bm.label==='lakshmi' ? '#b71c1c' : (bm.label==='hydrogen' ? '#2e7d32' : (bm.label==='sutli' ? '#6d4c2f' : (bm.label==='thunder' ? '#101010' : (bm.label==='sultan' ? '#4a148c' : '#232a30'))));
+      var brad = 12*(bm.size||1);
+      ctx.fillStyle=bodyCol; ctx.beginPath(); ctx.arc(bx,by-11,brad,0,7); ctx.fill();
+      ctx.fillStyle='rgba(255,255,255,0.14)'; ctx.beginPath(); ctx.arc(bx-4,by-15,3.6,0,7); ctx.fill();
+      ctx.strokeStyle='#8d6e63'; ctx.lineWidth=2;
+      ctx.beginPath(); ctx.moveTo(bx+8,by-19);
+      ctx.quadraticCurveTo(bx+15,by-28, bx+19,by-25+Math.sin(t*30)*1.2); ctx.stroke();
+      /* sputtering fuse */
+      var fx2=bx+19, fy2=by-25+Math.sin(t*30)*1.2;
+      for(var fp2=0;fp2<3;fp2++){ star(fx2,fy2,rand(-1.3,1.3),rand(-1.6,0.4),[255,213,79],'spark',rand(0.7,1.4),rand(0.15,0.35)); }
+      var fg3=ctx.createRadialGradient(fx2,fy2,0,fx2,fy2,9);
+      fg3.addColorStop(0,'rgba(255,220,120,0.9)'); fg3.addColorStop(1,'rgba(255,140,0,0)');
+      ctx.fillStyle=fg3; ctx.beginPath(); ctx.arc(fx2,fy2,9,0,7); ctx.fill();
+      /* no per-frame fuse pops: the sputter plays once in placeBomb.
+         Per-frame sound calls from the render loop were a root cause
+         of the mid-show silence — they flooded the audio path. */
+      if(bm.fuse<=0){ bombs.splice(bi,1); detonateBomb(bm); }
+    }
+
+    /* --- rockets in flight --- */
+    for(var ri=rockets.length-1; ri>=0; ri--){
+      var r=rockets[ri]; r.age+=dt; r.px=r.x; r.py=r.y;
+      r.vy+=0.055*dt; /* gravity bends the climb, like a real shell */
+      r.vx+=Math.sin(t*9+r.wob)*0.018*dt;
+      r.x+=(r.vx+wind*0.06)*dt; r.y+=r.vy*dt;
+      /* exhaust: fire + smoke trail */
+      var nTrail=PERF_TIER===0?1:PERF_TIER===1?2:3;
+      for(var tp=0; tp<nTrail; tp++){
+        star(r.x+rand(-1.2,1.2), r.y+9, rand(-0.5,0.5)-r.vx*0.2, rand(1.4,3.0), pick([[255,183,77],[255,140,40],[255,240,190]]), 'exhaust', rand(0.9,2.0), rand(0.25,0.5));
+      }
+      if(Math.random()<0.5) addSmoke(r.x, r.y+12, 1, false);
+      /* glowing head + stick */
+      var rhg=ctx.createRadialGradient(r.x,r.y,0,r.x,r.y,11);
+      rhg.addColorStop(0,'rgba(255,246,200,0.95)'); rhg.addColorStop(1,'rgba(255,160,40,0)');
+      ctx.fillStyle=rhg; ctx.beginPath(); ctx.arc(r.x,r.y,11,0,7); ctx.fill();
+      ctx.strokeStyle='rgba(214,178,130,0.85)'; ctx.lineWidth=2; ctx.lineCap='round';
+      var angR=Math.atan2(r.vy,r.vx)+Math.PI/2;
+      ctx.beginPath(); ctx.moveTo(r.x+Math.sin(angR)*3, r.y-Math.cos(angR)*3*-1);
+      ctx.lineTo(r.x-Math.sin(angR)*13, r.y+Math.cos(angR)*13); ctx.stroke();
+      if(r.y<=r.ty || r.vy>-1.6){ explodeRocket(r); rockets.splice(ri,1); }
+    }
+
+    /* --- flower-pot fountains --- */
+    for(var fi2=fountains.length-1; fi2>=0; fi2--){
+      var f=fountains[fi2]; f.age+=dt; f.life-=0.0052*dt;
+      var env=Math.sin(Math.min(1,Math.max(0,(1-f.life)))*Math.PI); /* ramp up, roar, die down */
+      env=Math.min(1, env*1.6);
+      var surge=env*(0.82+0.28*Math.sin(t*7.3+f.x)+0.12*Math.sin(t*23+f.x));
+      var emit=Math.round((f.volcano?24:(f.peacock?16:(f.crackling?14:10)))*surge*(PERF_TIER===0?0.55:PERF_TIER===1?0.8:1));
+      for(var fp=0; fp<emit; fp++){
+        var spread=(f.volcano?1.7:(f.peacock?2.3:(1-surge*0.4)*0.95));
+        var vyBase=f.volcano? rand(-11.5,-7.0) : (f.peacock? rand(-8.2,-5.2) : rand(-9.4,-6.4));
+        var p=star(f.x+rand(-2.5,2.5), f.y-13, rand(-spread,spread), vyBase*Math.max(0.4,surge),
+          pick(f.sh.cols.concat([[255,255,255]])), f.crackling?'strobe':'fountain', rand(1.0,2.3), rand(0.8,1.5));
+      }
+      if(f.crackling && performance.now()-(f._cp||0)>120){ f._cp=performance.now(); pop(0.12); }
+      if(Math.random()<0.30*surge) addSmoke(f.x+rand(-4,4), f.y-30, 1, false);
+      if(soundOn && performance.now()-(f._hs||0)>750){ f._hs=performance.now(); sizzle(0.5,0.02); }
+      /* cone glow at the mouth */
+      var fgl=ctx.createRadialGradient(f.x,f.y-13,0,f.x,f.y-13,30*surge+6);
+      fgl.addColorStop(0,'rgba(255,205,90,'+(0.55*surge)+')'); fgl.addColorStop(1,'rgba(255,140,30,0)');
+      ctx.globalCompositeOperation='lighter'; ctx.fillStyle=fgl; ctx.beginPath(); ctx.arc(f.x,f.y-13,30*surge+6,0,7); ctx.fill(); ctx.globalCompositeOperation='source-over';
+      /* terracotta pot */
+      var pgr=ctx.createLinearGradient(f.x-11,0,f.x+11,0);
+      pgr.addColorStop(0,'#7a2f0c'); pgr.addColorStop(0.5,'#b4501a'); pgr.addColorStop(1,'#6e2a0a');
+      ctx.fillStyle=pgr; ctx.beginPath();
+      ctx.moveTo(f.x-11,f.y); ctx.lineTo(f.x-6.5,f.y-14); ctx.lineTo(f.x+6.5,f.y-14); ctx.lineTo(f.x+11,f.y); ctx.closePath(); ctx.fill();
+      ctx.fillStyle='#8a3c10'; ctx.fillRect(f.x-8,f.y-15.5,16,2.6);
+      ctx.fillStyle='rgba(0,0,0,0.28)'; ctx.fillRect(f.x-11,f.y-2.5,22,2.5);
+      if(f.life<=0){ fountains.splice(fi2,1); addSmoke(f.x,f.y-10,3,false); }
+    }
+
+    /* --- chakras: spin up, wander, burn out --- */
+    for(var ci2=chakras.length-1; ci2>=0; ci2--){
+      var c=chakras[ci2]; c.age+=dt; c.life-=0.0062*dt;
+      var ramp=Math.min(1, c.age/26) * Math.min(1, Math.max(0,c.life)/0.25);
+      c.ang+=c.spin*(0.4+ramp*1.5)*dt*3.2;
+      c.vx+=Math.cos(c.ang)*(ramp*0.05)*dt + rand(-0.03,0.03)*dt;
+      c.vx*=Math.pow(0.985,dt); c.x+=c.vx*dt*3;
+      if(c.x<14){ c.x=14; c.vx=Math.abs(c.vx); } if(c.x>W-14){ c.x=W-14; c.vx=-Math.abs(c.vx); }
+      var emit2=Math.round(8*ramp);
+      for(var cp=0; cp<emit2; cp++){
+        var a=c.ang+rand(-0.22,0.22)+(cp%2?0:Math.PI);
+        star(c.x+Math.cos(a)*9, c.y+Math.sin(a)*3,
+          Math.cos(a)*rand(2.0,4.2)+c.vx, Math.sin(a)*rand(0.8,1.8)-rand(0.6,1.8),
+          pick(c.sh.cols), 'chakraSpark', rand(0.9,2.0), rand(0.35,0.7));
+      }
+      /* ground glow disc */
+      ctx.globalCompositeOperation='lighter';
+      var cgl=ctx.createRadialGradient(c.x,c.y+4,0,c.x,c.y+4,26*ramp+4);
+      cgl.addColorStop(0,'rgba(255,190,80,'+(0.4*ramp)+')'); cgl.addColorStop(1,'rgba(255,140,30,0)');
+      ctx.fillStyle=cgl; ctx.beginPath(); ctx.ellipse(c.x,c.y+4,26*ramp+4,(26*ramp+4)*0.35,0,0,7); ctx.fill();
+      ctx.globalCompositeOperation='source-over';
+      /* the wheel itself, squashed by perspective */
+      ctx.save(); ctx.translate(c.x,c.y); ctx.scale(1,0.42); ctx.rotate(c.ang);
+      ctx.strokeStyle='#e8b13c'; ctx.lineWidth=2.6;
+      ctx.beginPath(); ctx.arc(0,0,9,0,7); ctx.stroke();
+      for(var sp2=0; sp2<6; sp2++){ var sa=sp2*Math.PI/3; ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(Math.cos(sa)*9,Math.sin(sa)*9); ctx.stroke(); }
+      ctx.fillStyle='#ff7043'; ctx.beginPath(); ctx.arc(0,0,2.8,0,7); ctx.fill();
+      ctx.restore();
+      if(Math.random()<0.2*ramp) addSmoke(c.x,c.y-4,1,false);
+      if(c.life<=0){ chakras.splice(ci2,1); }
+    }
+
+    /* --- sparkler in hand --- */
+    if(sparking && mode==='sparkler'){
+      ctx.strokeStyle='#9aa7ad'; ctx.lineWidth=3; ctx.lineCap='round';
+      ctx.beginPath(); ctx.moveTo(sparkX+10,sparkY+26); ctx.lineTo(sparkX,sparkY+2); ctx.stroke();
+      ctx.globalCompositeOperation='lighter';
+      var sg=ctx.createRadialGradient(sparkX,sparkY,0,sparkX,sparkY,26);
+      sg.addColorStop(0,'rgba(255,252,220,0.95)'); sg.addColorStop(0.25,'rgba(255,220,110,0.45)'); sg.addColorStop(1,'rgba(255,180,60,0)');
+      ctx.fillStyle=sg; ctx.beginPath(); ctx.arc(sparkX,sparkY,26,0,7); ctx.fill();
+      ctx.globalCompositeOperation='source-over';
+      ctx.fillStyle='#fffde7'; ctx.beginPath(); ctx.arc(sparkX,sparkY,2.2,0,7); ctx.fill();
+    }
+
+    /* --- sky-writing text stars --- */
+    if(textStars.length){
+      ctx.save(); ctx.globalCompositeOperation='lighter';
+      for(var tsi=textStars.length-1; tsi>=0; tsi--){
+        var ts=textStars[tsi];
+        if(ts.delay>0){ ts.delay-=dt; continue; }
+        ts.life-=ts.decay*dt;
+        if(ts.life<=0){ textStars.splice(tsi,1); continue; }
+        /* hold near-full brightness, then fade slowly in the last third */
+        var fade=ts.life>0.34 ? 1 : ts.life/0.34;
+        var twk=(0.8+0.2*Math.sin(t*9+ts.seed*4))*fade;
+        var rr=ts.r||2.1;
+        ctx.fillStyle=rgb(ts.col, Math.max(0, twk));
+        ctx.beginPath(); ctx.arc(ts.x, ts.y, rr, 0, 7); ctx.fill();
+        ctx.fillStyle='rgba(255,255,255,'+(0.7*twk)+')';
+        ctx.beginPath(); ctx.arc(ts.x, ts.y, Math.max(0.5, rr*0.4), 0, 7); ctx.fill();
+        if(Math.random()<0.012) star(ts.x,ts.y,rand(-0.4,0.4),rand(0.2,0.8),ts.col,'spark',1.1,0.4);
+      }
+      ctx.restore();
+    }
+    /* --- helicopters --- */
+    for(var hei=helicopters.length-1; hei>=0; hei--){
+      var he=helicopters[hei]; he.age+=dt; he.ang+=0.9*dt; he.y+=he.vy*dt; he.vy-=0.012*dt; he.x+=(he.vx+Math.sin(he.age*0.2)*0.6)*dt;
+      sparklerAt(he.x, he.y+6, false);
+      ctx.save(); ctx.translate(he.x,he.y); ctx.strokeStyle='#ffd54f'; ctx.lineWidth=2.4; ctx.beginPath(); ctx.moveTo(-13*Math.cos(he.ang),0); ctx.lineTo(13*Math.cos(he.ang),0); ctx.stroke();
+      ctx.fillStyle='#e91e63'; ctx.beginPath(); ctx.ellipse(0,5,7,4.5,0,0,7); ctx.fill(); ctx.restore();
+      if(he.age>95 || he.y<70){ burstSphere(he.x,he.y,he.sh,64,4.8,2.3,1.3,'star'); boom(0.8,0.1); addGlow(he.x,he.y,160,he.sh.glow,0.8); helicopters.splice(hei,1); }
+    }
+    /* --- snake tablets: coiling black ash + smoke --- */
+    for(var sni=snakes.length-1; sni>=0; sni--){
+      var sn=snakes[sni]; sn.age+=dt; sn.life-=0.0045*dt;
+      var sx2=sn.x+Math.sin(sn.age*0.11+sn.seed)*Math.min(20, sn.age*0.35);
+      var sy2=groundY-Math.min(44, sn.age*0.55);
+      particles.push({x:sx2,y:sy2,px:sx2,py:sy2,vx:rand(-0.15,0.15),vy:rand(-0.25,0),c:[52,48,44],type:'debris',size:rand(2,3.6),life:1,decay:0.006,grav:0.01,drag:0.99,age:0,seed:0});
+      if(Math.random()<0.45) addSmoke(sn.x, sy2-4, 1, false);
+      ctx.fillStyle='#2b2723'; ctx.beginPath(); ctx.ellipse(sn.x,groundY-2,13,4,0,0,7); ctx.fill();
+      ctx.fillStyle='#ffb52e'; ctx.beginPath(); ctx.arc(sn.x,sy2,2.2,0,7); ctx.fill();
+      if(sn.life<=0) snakes.splice(sni,1);
+    }
+
+    /* --- diyas in front, flames leaning with the breeze --- */
+    for(var di=0; di<diyas.length; di++){
+      var d=diyas[di], fy=groundY+17, fl=1+Math.sin(t*8+d.p)*0.16+Math.sin(t*19+d.p*2)*0.06;
+      var lean=Math.sin(t*2.2+d.p)*1.1 + wind*2.2;
+      ctx.fillStyle=T.pot[0]; ctx.beginPath(); ctx.ellipse(d.x,fy+4.5,8.5*d.s,3.4*d.s,0,0,7); ctx.fill();
+      ctx.fillStyle=T.pot[1]; ctx.beginPath(); ctx.ellipse(d.x,fy+3.4,7*d.s,2.6*d.s,0,0,7); ctx.fill();
+      ctx.fillStyle=T.pot[2]; ctx.beginPath(); ctx.ellipse(d.x,fy+2.6,4.6*d.s,1.5*d.s,0,0,7); ctx.fill();
+      var fg=ctx.createRadialGradient(d.x,fy-2,0,d.x,fy-2,13*fl*d.s);
+      fg.addColorStop(0,'rgba('+T.glowCol+',0.85)'); fg.addColorStop(0.4,'rgba('+T.glowCol+',0.32)'); fg.addColorStop(1,'rgba('+T.glowCol+',0)');
+      ctx.fillStyle=fg; ctx.beginPath(); ctx.arc(d.x,fy-2,13*fl*d.s,0,7); ctx.fill();
+      /* teardrop flame */
+      ctx.fillStyle=T.flame;
+      ctx.beginPath();
+      ctx.moveTo(d.x-1.9*d.s, fy+1);
+      ctx.quadraticCurveTo(d.x-2.1*d.s, fy-3.4*fl*d.s, d.x+lean, fy-6.4*fl*d.s);
+      ctx.quadraticCurveTo(d.x+2.1*d.s, fy-3.4*fl*d.s, d.x+1.9*d.s, fy+1);
+      ctx.closePath(); ctx.fill();
+      ctx.fillStyle=T.flameCore;
+      ctx.beginPath(); ctx.ellipse(d.x+lean*0.3, fy-1.6, 0.95*d.s, 2.1*fl*d.s, lean*0.04, 0, 7); ctx.fill();
+    }
+
+    /* ================= PARTICLE PHYSICS + RENDER (additive) ================= */
+    ctx.globalCompositeOperation='lighter';
+    ctx.lineCap='round';
+    for(var pi=particles.length-1; pi>=0; pi--){
+      var p=particles[pi];
+      p.age+=dt; p.px=p.x; p.py=p.y;
+      if(p.type==='chute'){ p.vy=Math.min(0.55, p.vy+0.008*dt); p.vx+=Math.sin(t*2+p.seed)*0.008*dt; }
+      else p.vy+=p.grav*dt;
+      var dr=Math.pow(p.drag,dt); p.vx*=dr; p.vy*= (p.type==='willow'? Math.pow(0.995,dt) : dr);
+      p.vx+=wind*(p.type==='willow'?0.006:0.002)*dt;
+      p.x+=p.vx*dt; p.y+=p.vy*dt;
+      p.life-=p.decay*dt;
+
+      /* fountain & chakra sparks bounce off the ground and die as embers */
+      if((p.type==='fountain'||p.type==='chakraSpark'||p.type==='debris') && p.y>groundY-1 && p.vy>0){
+        p.y=groundY-1; p.vy*=-rand(0.25,0.45); p.vx*=0.72;
+        if(Math.abs(p.vy)<0.5){ p.type='ember'; p.vy=0; p.vx*=0.9; p.decay=Math.max(p.decay,0.02); }
+      }
+      if(p.type==='ember' && p.y>=groundY-1){ p.x+=p.vx*dt; }
+
+      /* crossette stars split into four, like the real thing */
+      if(p.type==='cross' && p.splitAt>0 && p.life<p.splitAt){
+        p.splitAt=0; p.type='star';
+        for(var cs=0;cs<4;cs++){ star(p.x,p.y,p.vx+rand(-1.7,1.7),p.vy+rand(-1.7,1.7),p.c,'star',p.size*0.8,0.55); }
+        pop(0.05);
+      }
+      if(p.life<=0){ particles[pi]=particles[particles.length-1]; particles.pop(); continue; }
+
+      var L=p.life;
+      var alpha=L;
+      if(p.type==='strobe'){ alpha = (Math.sin(p.age*0.55+p.seed)>0.1)? L : L*0.04; }
+      else if(p.type==='willow'||p.type==='fountain'){ alpha=L*(0.6+0.4*Math.random()); }
+      else if(p.type==='spark'||p.type==='exhaust'||p.type==='chakraSpark'){ alpha=L*(0.5+0.5*Math.random()); }
+      var col = (p.type==='debris') ? p.c : coolColor(p.c, L);
+      /* motion streak: line from last frame to now */
+      ctx.strokeStyle=rgb(col, Math.max(0,alpha));
+      ctx.lineWidth=Math.max(0.6, p.size*L);
+      ctx.beginPath(); ctx.moveTo(p.px,p.py); ctx.lineTo(p.x,p.y); ctx.stroke();
+      /* hot core (skipped under heavy load — the streak alone reads fine) */
+      if(!cheapFx){
+        ctx.fillStyle=rgb([255,252,235], Math.max(0,alpha)*0.85);
+        ctx.beginPath(); ctx.arc(p.x,p.y,Math.max(0.4,p.size*0.42*L),0,7); ctx.fill();
+      }
+      /* spent stars crackle out */
+      if(p.type==='star' && L<0.22 && Math.random()<0.05 && performance.now()-_lastAmbPop>160){ _lastAmbPop=performance.now(); pop(0.045); }
+    }
+    ctx.globalCompositeOperation='source-over';
+    ctx.globalAlpha=1;
+
+    ctx.restore();
+  }
+
+  window.addEventListener('resize', resize);
+  window.addEventListener('orientationchange', function(){ setTimeout(resize, 60); });
+  if(window.ResizeObserver && stageEl){ new ResizeObserver(function(){ resize(); }).observe(stageEl); }
+  resize();
+  requestAnimationFrame(draw);
+
+  /* Welcome volley */
+  setTimeout(function(){ launchRocket(W*0.3, H*0.22); }, 400);
+  setTimeout(function(){ launchRocket(W*0.68, H*0.17, true); }, 900);
+  setTimeout(function(){ startFountain(W*0.5); }, 1400);
+})();
+</script>
+</body>
+</html>
